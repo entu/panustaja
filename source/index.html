@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Keeleressurside Panustaja</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
+    <link href="style.css" rel="stylesheet" />
+    <script type="text/javascript" src="../node_modules/jquery/dist/jquery.js"></script>
+    <script src="./script.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <input id="chdir_input" type="file" nwdirectory style="display:none" />
+    <div>
+        <table id="cards">
+            <tr>
+                <td id="hello_card_label" translate="hello_card" class="card_title current">Hello</td>
+                <td id="select_card_label" translate="select_card" class="card_title">Select</td>
+                <td id="upload_card_label" translate="upload_card" class="card_title">Upload</td>
+                <td id="thankyou_card_label" translate="thankyou_card" class="card_title">Thank You</td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <div id="card_contents" style="overflow: auto; height:800px">
+                        <card id="hello_card">
+                            <div translate="hello_text" class="infotext"></div>
+                            <button id="login_button" translate="login_button">.</button>
+                        </card>
+
+                        <card id="select_card">
+                            <div translate="select_text" class="infotext"></div>
+                            <button id="chdir_button">.</button>
+                        </card>
+
+                        <card id="upload_card">
+                            <div translate="upload_text" class="infotext"></div>
+                            <div id="upload_stats"></div>
+                            <label translate="resource_name">resource_name</label>
+                            <input id="resource_name" />
+                            <div id="overquota_total" translate="overquota_total" class="warning">
+                            </div>
+                            <div id="overquota_files" class="warning">
+                            </div>
+                            <button id="back_button" style="display:inline;" translate="back_button">.</button>
+                            <button id="upload_button" style="display:inline;" translate="upload_button">.</button>
+                            <div id="local_fs_tree"></div>
+                        </card>
+
+                        <card id="thankyou_card">
+                            <div translate="thankyou_text" class="infotext">
+                            </div>
+                        </card>
+
+                        <div id="uploaded_resource_list" style="display:none" translate="uploaded_resource_list"></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div id="waitspinner"></div>
+        <div id="upload_progress">
+            <div id="upload_back" progress></div>
+            <div id="upload_front" progress></div>
+        </div>
+    </div>
+</body>
+
+</html>

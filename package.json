@@ -1,0 +1,52 @@
+{
+  "name": "Panustaja",
+  "description": "Ressursikataloogi upitamiseks keeleressurside Entu repositooriumisse.",
+  "version": "1.0.0",
+  "main": "./source/index.html",
+  "license": "CC-SA",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.keeleressursid.ee:indrek-jentson/uploader.git"
+  },
+  "dependencies": {
+    "os-utils": "*",
+    "jquery": "2.1.3",
+    "moment": "2.9.0",
+    "marked": "0.3.3",
+    "font-awesome": "4.3.0"
+  },
+  "window": {
+    "show_in_taskbar": true,
+    "icon": "./source/images/murakas.png",
+    "toolbar": false,
+    "frame": true,
+    "show": true,
+    "position": "center",
+    "min_width": 1000,
+    "min_height": 500,
+    "width": 1100,
+    "height": 700
+  },
+  "platformOverrides": {
+    "win": {
+      "window": {
+        "toolbar": false
+      }
+    },
+    "osx": {
+      "window": {
+        "toolbar": false
+      }
+    },
+    "linux": {
+      "window": {
+        "toolbar": false
+      }
+    }
+  },
+  "webkit": {
+    "plugin": true
+  },
+  "chromium-args": "--ignore-gpu-blacklist"
+}
