@@ -63,7 +63,7 @@ var progressDoneCB = function progressDoneCB(metrics) {
     // $('#upload_progress').children().empty()
     $('#upload_back').width('0%')
     $('#upload_front').width('0%')
-    console.log('progress done', metrics)
+    // console.log('progress done', metrics)
 }
 progress.register_callbacks(
     progressStartedCB,
@@ -94,7 +94,7 @@ ENTU_API_AUTH = ENTU_API + 'user/auth'
 ENTU_API_USER = ENTU_API + 'user'
 
 
-console.log ( '= ' + gui.App.manifest.name + ' v.' + __VERSION + ' ==================================')
+// console.log ( '= ' + gui.App.manifest.name + ' v.' + __VERSION + ' ==================================')
 
 gui.Window.get().focus()
 
@@ -117,7 +117,7 @@ $( document ).ready(function() {
     require('dns').resolve('www.google.com', function(err) {
       if (err) {
         window.alert ('Netti pole')
-        console.log(err)
+        // console.log(err)
         process.exit(1)
       }
     })
@@ -125,7 +125,7 @@ $( document ).ready(function() {
     require('dns').resolve(ENTU_DNS, function(err) {
       if (err)
         {
-            console.log(err)
+            // console.log(err)
             window.alert ('Entu pole saadaval')
             process.exit(1)
         }
@@ -178,7 +178,7 @@ $( document ).ready(function() {
                             + ' faili ja kataloogi lugemiseks kulus '
                             + msToTime((new Date()).getTime() - now_ms) + '.'
                         $('[progress]').text(status_message)
-                        console.log(status_message)
+                        // console.log(status_message)
                         advanceToNextCard()
                         loadDirs.displayNodes((new Date()).getTime() - now_ms)
                     }
@@ -216,7 +216,7 @@ $( document ).ready(function() {
             $('#back_button').hide()
             $('#upload_button').hide()
             uploader.createResources(configuration.__ROOT_EID, function uploadCallback(data) {
-                console.log('Uploaded OK') // , data)
+                // console.log('Uploaded OK') // , data)
                 advanceToNextCard()
                 $('[progress]').text('Valmis.')
                 $('#waitspinner').hide('slow')
@@ -292,7 +292,7 @@ var execPath = function execPath() {
 }
 
 var sendFinalEmail = function sendFinalEmail(data) {
-    console.log('Send email notification to submitter.')
+    // console.log('Send email notification to submitter.')
     var message_body = []
     data.forEach(function iterateUploadedResources(resource) {
         message_body.push('<li><a href="' + resource.Uri + '">' + resource.Name + '</a></li>')
@@ -306,7 +306,7 @@ var sendFinalEmail = function sendFinalEmail(data) {
         'campaign':     'panustaja'
     }
     $.post(ENTU_API_EMAIL, post_data, function(returned_data) {
-        console.log(returned_data)
+        // console.log(returned_data)
     })
 }
 
@@ -335,7 +335,7 @@ var loadCard = function loadCard(card_name) {
 
 // fs.existsSync got deprecated and replaced with fs.accessSync in node 1.0.0
 var inoExistsSync = function inoExistsSync(path) {
-    console.log('Node version ' + process.versions.node)
+    // console.log('Node version ' + process.versions.node)
     if (process.versions.node.substr(0,2) === '1.') {
         try {
             fs.accessSync(path)
@@ -365,8 +365,7 @@ window.addEventListener('error', function(errEvent){
 })
 
 process.on('uncaughtException', function(err){
-    console.error('uncaughtException:', err)
-    console.error(err.stack)
+    // console.error('uncaughtException:', err)
+    // console.error(err.stack)
     // window.alert('uncaughtException ' + err)
 })
-
