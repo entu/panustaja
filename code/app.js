@@ -3,6 +3,7 @@ var op  = require('object-path')
 var fs  = require('fs')
 var ipc = require('ipc')
 BrowserWindow = require('browser-window')
+var j = require('electron-jade')({pretty: true}, {})
 
 var user_url = 'https://entu.keeleressursid.ee/api2/user'
 var auth_url = user_url + '/auth'
@@ -13,7 +14,6 @@ var user_data = {}
 app.on('ready', function() {
     authWindow = new BrowserWindow({ width: 300, height: 600, show: true })
     authWindow.setTitle('Panustaja - log in')
-    // authWindow.loadUrl('http://ww.ee')
     authWindow.loadUrl(auth_url)
     authWindow.webContents.on('did-finish-load', function() {
         authWindow.webContents.savePage('./user.json', 'HTMLOnly', function(err) {
@@ -41,7 +41,7 @@ app.on('ready', function() {
                     mainWindow = new BrowserWindow({ width: 900, height: 600, show: true })
                     mainWindow.setTitle('Panustaja - ' + user_data['name'])
                     mainWindow.center()
-                    mainWindow.loadUrl('file://' + __dirname + '/main.html')
+                    mainWindow.loadUrl('file://' + __dirname + '/views/main.jade')
                     authWindow.close()
                     mainWindow.webContents.openDevTools(true)
 
@@ -56,7 +56,7 @@ app.on('ready', function() {
 })
 
 ipc.on('log', function(event, message) {
-    console.log('message: ' + message)
+    console.log('message: ', message)
 })
 ipc.on('data', function(event, message) {
     console.log('data: ' + JSON.stringify(message, null, 4))

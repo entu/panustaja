@@ -1,5 +1,3 @@
-
-
 var bytesToSize = function bytesToSize(bytes) {
     if (bytes === undefined) bytes = 0
     var sizes = ['B', 'KB', 'MB', 'GB', 'TB']

@@ -3,12 +3,10 @@ var fs = require('fs')
 var op = require('object-path')
 var path = require('path')
 var async = require('async')
-var mime = require('mime-types')
 
-// TODO: WATCH: mmmagic is broken currently: Module version mismatch. Expected 46, got 14
-// var Magic = require('mmmagic').Magic
-// var magic = new Magic(mmm.MAGIC_MIME_TYPE | mmm.MAGIC_MIME_ENCODING)
-// usage:                 magic.detectFile(_path, function(err, result) {
+var mmm = require('mmmagic')
+var Magic = mmm.Magic
+var magic = new Magic(mmm.MAGIC_MIME_TYPE | mmm.MAGIC_MIME_ENCODING)
 
 var remote = require('remote')
 var dialog = remote.require('dialog')
@@ -16,19 +14,22 @@ var dialog = remote.require('dialog')
 var ipc = require('ipc')
 ipc.send('userdata-query')
 ipc.on('userdata-reply', function(user_data) {
-    document.getElementById('user_name').innerHTML = user_data.name
+    document.getElementById('userName').innerHTML = user_data.name
 })
+
+var b2s = require(path.join(__dirname, '..', 'bytesToSize.js'))
 
 var resource = {}
 var resource_stats = {}
-var dom_resource_name = document.getElementById('resource_name')
+var dom_resource_name = document.getElementById('resourceName')
+var dom_resource_stats = document.getElementById('resourceStats')
 dom_resource_name.setAttribute('hidden', '')
 
 function selectLocal () {
     resource = {name: 'root'}
-    resource_stats = {files: 0, directories: 0, mime:{}}
+    resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
     dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
-        dom_resource_name.removeAttribute('hidden')
+        setFormState('loading')
         dom_resource_name.value = ''
         if (_paths.length === 1) {
             var single_file = _paths[0]
@@ -45,53 +46,85 @@ function selectLocal () {
                         }
                         _paths = files.map(function(file) {
                             var fullpath = path.join(single_file, file)
-                            console.log('foo1', single_file + '+' + file + '=' + fullpath)
+                            // console.log('foo1', single_file + '+' + file + '=' + fullpath)
                             return fullpath
                         })
-                        console.log('foo1');
                         recurseLocal(resource, _paths, resourceLoaded)
                     })
                 } else {
-                    console.log('foo2');
                     recurseLocal(resource, _paths, resourceLoaded)
                 }
             })
         } else {
-            console.log('foo3');
             recurseLocal(resource, _paths, resourceLoaded)
         }
     })
 }
 
 var resourceLoaded = function resourceLoaded() {
-    console.log(JSON.stringify(resource, null, 4))
-    console.log(JSON.stringify(resource_stats, null, 4))
+    setFormState('select')
+    console.log(JSON.stringify(b2s(resource_stats.files.size), null, 4))
+    console.log(resource_stats.files.size)
+    ipc.send('data', resource_stats)
+    renderResource()
+}
+
+var renderResource = function renderResource() {
+    dom_resource_stats.removeAttribute('hidden')
+    document.getElementById('resourceDirectories').innerHTML = ''
+    document.getElementById('resourceFiles').innerHTML = ''
+    document.getElementById('mimeStats').innerHTML = ''
+    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resource_stats.directories.count))
+    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resource_stats.files.count + ' / ' + b2s(resource_stats.files.size)))
+    Object.keys(resource_stats.mime).forEach(function (mime_type_name) {
+        var text_node = document.createTextNode(
+            mime_type_name
+            + ': ' + op.get(resource_stats, ['mime', mime_type_name, 'count'])
+            + ' / ' + b2s(op.get(resource_stats, ['mime', mime_type_name, 'size']))
+        )
+        var li_node = document.createElement('LI')
+        li_node.appendChild(text_node)
+        document.getElementById('mimeStats').appendChild(li_node)
+    })
 }
 
 var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
-    console.log(JSON.stringify(paths, null, 4))
+    // console.log(JSON.stringify(paths, null, 4))
     async.each(paths, function iterator(_path, callback) {
         fs.stat(_path, function(err, stats) {
-            console.log('stats for:', _path)
+            if (err) {
+                // console.log(err)
+                return callback()
+            }
             if (stats.isFile()) {
-                resource_stats.files ++
-                op.push(parent_resource, 'files', _path)
-                var mimetype = mime.lookup(_path) || 'unknown'
-                op.set(resource_stats, ['mimetypes', mimetype], op.get(resource_stats, ['mimetypes', mimetype], 0) + 1)
-                console.log('file', _path, mimetype)
-                callback()
+                magic.detectFile(_path, function(err, result) {
+                    if (err) {
+                        // console.log(err)
+                        return callback()
+                    }
+                    resource_stats.files.count++
+                    resource_stats.files.size += stats.size
+                    op.push(parent_resource, 'files', _path)
+                    var mime = result.split(';')[0]
+                    var charset = result.split(';')[1].split('=')[1]
+                    op.set(resource_stats, ['mime', mime, 'count'], op.get(resource_stats, ['mime', mime, 'count'], 0) + 1)
+                    op.set(resource_stats, ['mime', mime, 'size'], op.get(resource_stats, ['mime', mime, 'size'], 0) + stats.size)
+                    op.set(resource_stats, ['mime', mime, 'charsets', charset, 'count'], op.get(resource_stats, ['mime', mime, 'charsets', charset, 'count'], 0) + 1)
+                    op.set(resource_stats, ['mime', mime, 'charsets', charset, 'size'], op.get(resource_stats, ['mime', mime, 'charsets', charset, 'size'], 0) + stats.size)
+                    callback()
+                })
             } else if (stats.isDirectory()) {
-                resource_stats.directories ++
+                resource_stats.directories.count++
                 var directory = {name: _path}
                 op.push(parent_resource, 'resources', directory)
-                console.log('dir: ' + JSON.stringify(_path, null, 4))
+                // console.log('dir: ' + JSON.stringify(_path, null, 4))
                 fs.readdir(_path, function(err, files) {
                     if (err) {
                         return callback(err)
                     }
                     var _paths = files.map(function(file) {
                         var fullpath = path.join(_path, file)
-                        console.log(_path + '+' + file + '=' + fullpath)
+                        // console.log(_path + '+' + file + '=' + fullpath)
                         return fullpath
                     })
                     recurseLocal(directory, _paths, callback)
@@ -105,4 +138,22 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
             loadedCB()
         }
     })
+}
+
+var setFormState = function setFormState(state) {
+    switch(state) {
+        case 'select':
+            document.getElementById('loading').setAttribute('hidden', '')
+            document.getElementById('resourceStats').removeAttribute('hidden')
+            document.getElementById('selectLocal').removeAttribute('hidden')
+            document.getElementById('selectLocalMessage').removeAttribute('hidden')
+            break
+        case 'loading':
+            dom_resource_name.removeAttribute('hidden')
+            document.getElementById('loading').removeAttribute('hidden')
+            document.getElementById('resourceStats').setAttribute('hidden', '')
+            document.getElementById('selectLocal').setAttribute('hidden', '')
+            document.getElementById('selectLocalMessage').setAttribute('hidden', '')
+            break
+    }
 }
