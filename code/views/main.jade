@@ -8,15 +8,35 @@ html
 
     body
 
-        h1#userName Panustaja
-        div#selectLocalMessage Palun vali fail või kataloog, mida soovid üles laadida.
-        button#selectLocal(onclick='selectLocal()') Vali fail
-        input#resourceName(type='text' placeholder='Ressursi nimi' style='width:100%;' hidden='')
-        div#contents
-            h3#loading(hidden='') Loading...
-            ul#resourceStats(hidden='')
+        h1#userName(hidden='') Panustaja
+        div#selectLocal
+            p#selectLocalMessage Palun vali fail või kataloog, mida soovid üles laadida.
+            button#selectLocalButton(onclick='selectLocal()') Vali fail
+        div#resourceName(hidden='')
+            p#resourceNameMessage Muuda ressursi nimi sobivaks.
+            input#resourceNameInput(type='text' placeholder='Ressursi nimi' style='width:100%;')
+        div#loading(hidden='')
+            h3 Loen failisüsteemist ...
+        div#resourceStats(hidden='')
+            ul#resourceStatsList
                 li#resourceDirectories
                 li#resourceFiles
                 ul#mimeStats
+        div#uploadResource(hidden='')
+            p#uploadResourceMessage Ressurss on üleslaadimiseks valmis.
+            button#uploadResourceButton(onclick='uploadResource()') Panusta!
+        div#uploading(hidden='') 
+            span= 'Kataloogid: '
+            span#uploadedResources 0
+            span /
+            span#uploadTotalResources 0
+            div#resourceProgressbarOuter
+                div#resourceProgressbarInner
+            span= 'Failid: '
+            span#uploadedSize 0
+            span /
+            span#uploadTotalSize 0
+            div#fileProgressbarOuter
+                div#fileProgressbarInner
         
         script(src='../main.js')
