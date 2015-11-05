@@ -16,18 +16,26 @@ var home_path = process.env.HOME ? process.env.HOME : process.env.HOMEPATH
 USER_PATH = path.join(home_path, 'user.json')
 IS_DEV = process.env.DEV ? true : false
 
+var pjson_path = path.join(__dirname, '..', 'package.json')
+var pjson = require(pjson_path)
 if (IS_DEV) {
-    var pjson_path = path.join(__dirname, '..', 'package.json')
-    var pjson = require(pjson_path)
-    console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (++pjson.build) + ') ====----')
+    pjson.build++
+    console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
     fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 4))
 }
 
 app.on('ready', function() {
-    windows['authWindow'] = new BrowserWindow({ width: 300, height: 600, show: true })
-    windows['authWindow'].setTitle('Panustaja - log in')
+    windows['authWindow'] = new BrowserWindow({ width: 350, height: 600, show: true, "web-preferences": {partition: "persist:panustaja (build " + (pjson.build) + ")"} })
+    var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse.'
+    windows['authWindow'].setTitle(title)
     windows['authWindow'].loadUrl(auth_url)
     windows['authWindow'].webContents.on('did-finish-load', function() {
+        windows['authWindow'].setTitle(title)
+        console.log(windows['authWindow'].webContents.getUrl())
+        if (windows['authWindow'].webContents.getUrl() !== user_url
+            && windows['authWindow'].webContents.getUrl() !== user_url + '#') {
+            return
+        }
         // require('dialog').showMessageBox({type:'info', message:'enne salvestamist: ' + USER_PATH, buttons:['ok']})
         windows['authWindow'].webContents.savePage(USER_PATH, 'HTMLOnly', function(err) {
             if (err) {
