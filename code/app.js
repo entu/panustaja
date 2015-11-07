@@ -12,8 +12,6 @@ var user_url = 'https://entu.keeleressursid.ee/api2/user'
 var auth_url = user_url + '/auth'
 
 
-var home_path = process.env.HOME ? process.env.HOME : process.env.HOMEPATH
-USER_PATH = path.join(home_path, 'user.json')
 IS_DEV = process.env.DEV ? true : false
 
 var pjson_path = path.join(__dirname, '..', 'package.json')
@@ -25,36 +23,58 @@ if (IS_DEV) {
 }
 
 app.on('ready', function() {
-    windows['authWindow'] = new BrowserWindow({ width: 350, height: 600, show: true, "web-preferences": {partition: "persist:panustaja (build " + (pjson.build) + ")"} })
-    var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse.'
+    var home_path = app.getPath('home')
+    USER_PATH = path.join(home_path, 'user.json')
+
+    windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": {partition: "persist:panustaja (build " + (pjson.build) + ")"} })
+    var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
+    windows['authWindow'].center()
     windows['authWindow'].setTitle(title)
     windows['authWindow'].loadUrl(auth_url)
+    windows['authWindow'].webContents.on('did-get-response-details', function(e, s, new_url) {
+        windows['authWindow'].setTitle(title)
+        if (new_url === user_url || new_url === user_url + '#') {
+            windows['authWindow'].hide()
+        }
+    })
     windows['authWindow'].webContents.on('did-finish-load', function() {
         windows['authWindow'].setTitle(title)
-        console.log(windows['authWindow'].webContents.getUrl())
-        if (windows['authWindow'].webContents.getUrl() !== user_url
-            && windows['authWindow'].webContents.getUrl() !== user_url + '#') {
+        var new_url = windows['authWindow'].webContents.getUrl()
+        if (new_url === user_url || new_url === user_url + '#') {
+            mainWindow = new BrowserWindow({ width: 900, height: 600, show: true })
+            mainWindow.setTitle('Panustaja')
+            mainWindow.center()
+            // require('dialog').showMessageBox({type:'info', message:'OK\n"' + windows['authWindow'].webContents.getUrl() + '"'
+            //     + '\n==='
+            //     + '\n"' + user_url + '"'
+            //     , buttons:['ok']
+            // })
+            // require('dialog').showMessageBox({type:'info', message:'HOME: ' + home_path, buttons:['ok']})
+            windows['authWindow'].webContents.savePage(USER_PATH, 'HTMLOnly', function(err) {
+                if (err) {
+                    require('dialog').showMessageBox({type:'info', message:'peale salvestamist: katki' + err, buttons:['ok']})
+                    console.log("Error:", err)
+                    process.exit()
+                } else {
+                    var view_path = path.join(__dirname, 'views', 'main.jade')
+                    // require('dialog').showMessageBox({type:'info', message:'peale salvestamist: korras\n'
+                    //     + 'Laen lehte: file://' + view_path, buttons:['ok']})
+                    mainWindow.webContents.loadUrl('file://' + view_path)
+                    windows['authWindow'].hide()
+                    if (IS_DEV) {
+                        mainWindow.webContents.openDevTools(true)
+                    }
+                    // require('dialog').showMessageBox({type:'info', message:'fail suletud: ' + USER_PATH, buttons:['ok']})
+                }
+            })
+        } else {
+            // require('dialog').showMessageBox({type:'info', message:'"' + new_url + '"'
+            //     + '\n!=='
+            //     + '\n"' + user_url + '"'
+            //     , buttons:['ok']
+            // })
             return
         }
-        // require('dialog').showMessageBox({type:'info', message:'enne salvestamist: ' + USER_PATH, buttons:['ok']})
-        windows['authWindow'].webContents.savePage(USER_PATH, 'HTMLOnly', function(err) {
-            if (err) {
-                require('dialog').showMessageBox({type:'info', message:'peale salvestamist: katki' + err, buttons:['ok']})
-                console.log("Error:", err)
-                process.exit()
-            } else {
-                // require('dialog').showMessageBox({type:'info', message:'peale salvestamist: korras', buttons:['ok']})
-                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true })
-                mainWindow.setTitle('Panustaja')
-                mainWindow.center()
-                mainWindow.loadUrl('file://' + __dirname + '/views/main.jade')
-                // windows['authWindow'].hide()
-                if (IS_DEV) {
-                    mainWindow.webContents.openDevTools(true)
-                }
-                // require('dialog').showMessageBox({type:'info', message:'fail suletud: ' + USER_PATH, buttons:['ok']})
-            }
-        })
     })
 })
 

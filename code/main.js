@@ -9,10 +9,12 @@ var Magic = mmm.Magic
 var magic = new Magic(mmm.MAGIC_MIME_TYPE | mmm.MAGIC_MIME_ENCODING)
 
 var remote = require('remote')
+var app = remote.require('app')
 var dialog = remote.require('dialog')
 
 // console.log(path.join(__dirname)) ==> panustaja/code/views
 var pjson = require(path.join(__dirname, '..', '..', 'package.json'))
+UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
 var ipc = require('ipc')
 // ipc.send('userdata-query')
@@ -29,9 +31,9 @@ var dom_resource_stats = document.getElementById('resourceStats')
 var renderer_interval
 
 setTimeout(function () {
-    // dialog.showMessageBox({type:'info', message:'loeme faili: ' + USER_PATH, buttons:['ok']})
-    var home_path = process.env.HOME ? process.env.HOME : process.env.HOMEPATH
+    var home_path = app.getPath('home')
     USER_PATH = path.join(home_path, 'user.json')
+    // dialog.showMessageBox({type:'info', message:'loeme faili: ' + USER_PATH, buttons:['ok']})
     fs.readFile(USER_PATH, 'utf8', function(err, data_json) {
         // dialog.showMessageBox({type:'info', message:'fail avatud: ' + USER_PATH, buttons:['ok']})
         var data = JSON.parse(data_json)
@@ -40,7 +42,7 @@ setTimeout(function () {
             user_data['session_key'] = op.get(data, 'result.session_key')
             user_data['name'] = op.get(data, 'result.name')
             document.getElementById('userName').innerHTML = user_data.name
-            var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | ' + user_data['name']
+            var title = UPLOADER_VERSION + ' | ' + user_data['name']
             ipc.send('setTitle', title)
         } else {
             ipc.send('log', 'User data incomplete.')
@@ -48,7 +50,7 @@ setTimeout(function () {
         }
         ipc.send('closeAuth')
     })
-}, 100)
+}, 10)
 
 function selectLocal () {
     resource = {name: 'root'}
@@ -93,7 +95,7 @@ function selectLocal () {
 var resourceLoaded = function resourceLoaded() {
     setFormState('loaded')
     clearInterval(renderer_interval)
-    // ipc.send('data', resource_stats)
+    // ipc.send('data', resource)
     renderResource()
 }
 
@@ -163,42 +165,8 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
     })
 }
 
-var uploadResource = function uploadResource() {
-    setFormState('uploading')
-    document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
-    document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
-    renderer_interval = setInterval(function () {
-        renderResource()
-    }, 100)
-    setFormState('uploading')
+var uploadResource = require(path.join(__dirname, '..', 'upload.js'))
 
-}
-
-var resourceUploaded = function resourceUploaded() {
-    setFormState('uploaded')
-    clearInterval(renderer_interval)
-    // ipc.send('data', resource_stats)
-    renderProgress()
-}
-
-var renderProgress = function renderProgress() {
-    // dom_resource_stats.removeAttribute('hidden')
-    document.getElementById('resourceDirectories').innerHTML = ''
-    document.getElementById('resourceFiles').innerHTML = ''
-    document.getElementById('mimeStats').innerHTML = ''
-    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resource_stats.directories.count))
-    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resource_stats.files.count + ' | ' + b2s(resource_stats.files.size)))
-    Object.keys(resource_stats.mime).forEach(function (mime_type_name) {
-        var text_node = document.createTextNode(
-            mime_type_name
-            + ': ' + op.get(resource_stats, ['mime', mime_type_name, 'count'])
-            + ' | ' + b2s(op.get(resource_stats, ['mime', mime_type_name, 'size']))
-        )
-        var li_node = document.createElement('LI')
-        li_node.appendChild(text_node)
-        document.getElementById('mimeStats').appendChild(li_node)
-    })
-}
 var setFormState = function setFormState(state) {
     switch(state) {
         case 'select':
@@ -239,6 +207,7 @@ var setFormState = function setFormState(state) {
             document.getElementById('resourceName').setAttribute('hidden', '')
             break
         case 'uploaded':
+            document.getElementById('thankYou').removeAttribute('hidden')
             // -------- //
             document.getElementById('resourceStats').setAttribute('hidden', '')
             document.getElementById('uploadResource').setAttribute('hidden', '')

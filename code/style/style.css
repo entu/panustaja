@@ -1,24 +1,28 @@
 #resourceProgressbarOuter {
     width: 100%;
-    height: 10px;
+    border-radius: 25px;
+    height: 6px;
     background-color: #cdf;
-    border: 1px solid black;
+    border: 0px solid black;
 }
 #resourceProgressbarInner {
-    width: 10%;
+    width: 0%;
+    border-radius: 25px;
     height: 100%;
     background-color: #79b;
-    /*border: 1px solid green;*/
+    /*border: 0px solid green;*/
 }
 #fileProgressbarOuter {
     width: 100%;
-    height: 10px;
+    border-radius: 25px;
+    height: 6px;
     background-color: #cdf;
-    border: 1px solid black;
+    border: 0px solid black;
 }
 #fileProgressbarInner {
-    width: 27%;
+    width: 0%;
+    border-radius: 25px;
     height: 100%;
     background-color: #79b;
-    /*border: 1px solid green;*/
+    /*border: 0px solid green;*/
 }
