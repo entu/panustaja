@@ -9,7 +9,7 @@ html
     body
 
         h1#userName() Tere
-        div#selectLocal
+        div#selectLocal(hidden)
             p#selectLocalMessage Palun vali fail(id) ja/või kataloog(id), mida soovid üles laadida.
             button#selectLocalButton(onclick='selectLocal()') Vali
         div#resourceName(hidden='')
@@ -32,12 +32,12 @@ html
             span#uploadTotalResources 0
             div#resourceProgressbarOuter
                 div#resourceProgressbarInner
+                    div#fileProgressbarInner
             span= 'Failid: '
             span#uploadedSize 0
             span /
             span#uploadTotalSize 0
-            div#fileProgressbarOuter
-                div#fileProgressbarInner
+            //- div#fileProgressbarOuter
             pre#status
         div#thankYou(hidden='') Aitäh! 
         

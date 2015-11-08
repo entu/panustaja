@@ -1,21 +1,21 @@
 #resourceProgressbarOuter {
     width: 100%;
     border-radius: 25px;
-    height: 6px;
-    background-color: #cdf;
+    height: 9px;
+    background-color: #E8E8C3;
     border: 0px solid black;
 }
 #resourceProgressbarInner {
     width: 0%;
     border-radius: 25px;
     height: 100%;
-    background-color: #79b;
+    background-color: #92CC6F;
     /*border: 0px solid green;*/
 }
 #fileProgressbarOuter {
     width: 100%;
     border-radius: 25px;
-    height: 6px;
+    height: 9px;
     background-color: #cdf;
     border: 0px solid black;
 }
@@ -23,6 +23,6 @@
     width: 0%;
     border-radius: 25px;
     height: 100%;
-    background-color: #79b;
+    background-color: #0065CA;
     /*border: 0px solid green;*/
 }

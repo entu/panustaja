@@ -17,9 +17,6 @@ var pjson = require(path.join(__dirname, '..', '..', 'package.json'))
 UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
 var ipc = require('ipc')
-// ipc.send('userdata-query')
-// ipc.on('userdata-reply', function(user_data) {
-// })
 
 var b2s = require(path.join(__dirname, '..', 'bytesToSize.js'))
 
@@ -31,11 +28,11 @@ var dom_resource_stats = document.getElementById('resourceStats')
 var renderer_interval
 
 setTimeout(function () {
-    var home_path = app.getPath('home')
-    USER_PATH = path.join(home_path, 'user.json')
-    // dialog.showMessageBox({type:'info', message:'loeme faili: ' + USER_PATH, buttons:['ok']})
+    USER_PATH = path.join(app.getPath('temp'), 'user.json')
     fs.readFile(USER_PATH, 'utf8', function(err, data_json) {
+        if (err) throw (err)
         // dialog.showMessageBox({type:'info', message:'fail avatud: ' + USER_PATH, buttons:['ok']})
+        // dialog.showMessageBox({type:'info', message:data_json, buttons:['ok']})
         var data = JSON.parse(data_json)
         if (op.get(data, 'result.user_id', false)) {
             user_data['user_id'] = op.get(data, 'result.user_id')
@@ -44,6 +41,7 @@ setTimeout(function () {
             document.getElementById('userName').innerHTML = user_data.name
             var title = UPLOADER_VERSION + ' | ' + user_data['name']
             ipc.send('setTitle', title)
+            setFormState('select')
         } else {
             ipc.send('log', 'User data incomplete.')
             ipc.send('data', data)
@@ -177,6 +175,8 @@ var setFormState = function setFormState(state) {
             document.getElementById('uploading').setAttribute('hidden', '')
             document.getElementById('uploadResource').setAttribute('hidden', '')
             document.getElementById('resourceName').setAttribute('hidden', '')
+            // ---
+            // document.getElementById('uploading').removeAttribute('hidden')
             break
         case 'loading':
             document.getElementById('loading').removeAttribute('hidden')
@@ -219,4 +219,3 @@ var setFormState = function setFormState(state) {
             break
     }
 }
-setFormState('select')

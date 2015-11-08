@@ -23,9 +23,9 @@ if (IS_DEV) {
 }
 
 app.on('ready', function() {
-    var home_path = app.getPath('home')
-    USER_PATH = path.join(home_path, 'user.json')
+    USER_PATH = path.join(app.getPath('temp'), 'user.json')
 
+    // windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": {partition: ''} })
     windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": {partition: "persist:panustaja (build " + (pjson.build) + ")"} })
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     windows['authWindow'].center()
@@ -49,14 +49,14 @@ app.on('ready', function() {
             //     + '\n"' + user_url + '"'
             //     , buttons:['ok']
             // })
-            // require('dialog').showMessageBox({type:'info', message:'HOME: ' + home_path, buttons:['ok']})
+            // console.log(windows['authWindow'].webContents.session.cookies);
             windows['authWindow'].webContents.savePage(USER_PATH, 'HTMLOnly', function(err) {
                 if (err) {
                     require('dialog').showMessageBox({type:'info', message:'peale salvestamist: katki' + err, buttons:['ok']})
                     console.log("Error:", err)
                     process.exit()
                 } else {
-                    var view_path = path.join(__dirname, 'views', 'main.jade')
+                    var view_path = path.join(app.getAppPath(), 'code', 'views', 'main.jade')
                     // require('dialog').showMessageBox({type:'info', message:'peale salvestamist: korras\n'
                     //     + 'Laen lehte: file://' + view_path, buttons:['ok']})
                     mainWindow.webContents.loadUrl('file://' + view_path)
