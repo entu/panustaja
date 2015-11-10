@@ -11,14 +11,15 @@ var magic = new Magic(mmm.MAGIC_MIME_TYPE | mmm.MAGIC_MIME_ENCODING)
 var remote = require('remote')
 var app = remote.require('app')
 var dialog = remote.require('dialog')
+var clipboard = remote.require('clipboard')
 
 // console.log(path.join(__dirname)) ==> panustaja/code/views
-var pjson = require(path.join(__dirname, '..', '..', 'package.json'))
+var pjson = require(path.join(__dirname, '..', 'package.json'))
 UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
 var ipc = require('ipc')
 
-var b2s = require(path.join(__dirname, '..', 'bytesToSize.js'))
+var b2s = require(path.join(__dirname, 'bytesToSize.js'))
 
 var user_data = {}
 var resource = {}
@@ -27,28 +28,22 @@ var dom_resource_name = document.getElementById('resourceNameInput')
 var dom_resource_stats = document.getElementById('resourceStats')
 var renderer_interval
 
-setTimeout(function () {
-    USER_PATH = path.join(app.getPath('temp'), 'user.json')
-    fs.readFile(USER_PATH, 'utf8', function(err, data_json) {
-        if (err) throw (err)
-        // dialog.showMessageBox({type:'info', message:'fail avatud: ' + USER_PATH, buttons:['ok']})
-        // dialog.showMessageBox({type:'info', message:data_json, buttons:['ok']})
-        var data = JSON.parse(data_json)
-        if (op.get(data, 'result.user_id', false)) {
-            user_data['user_id'] = op.get(data, 'result.user_id')
-            user_data['session_key'] = op.get(data, 'result.session_key')
-            user_data['name'] = op.get(data, 'result.name')
-            document.getElementById('userName').innerHTML = user_data.name
-            var title = UPLOADER_VERSION + ' | ' + user_data['name']
-            ipc.send('setTitle', title)
-            setFormState('select')
-        } else {
-            ipc.send('log', 'User data incomplete.')
-            ipc.send('data', data)
-        }
-        ipc.send('closeAuth')
-    })
-}, 10)
+var initialize = function initialize() {
+    var data = JSON.parse(clipboard.readText())
+    if (op.get(data, 'result.user_id', false)) {
+        user_data['user_id'] = op.get(data, 'result.user_id')
+        user_data['session_key'] = op.get(data, 'result.session_key')
+        user_data['name'] = op.get(data, 'result.name')
+        document.getElementById('userName').innerHTML = user_data.name
+        var title = UPLOADER_VERSION + ' | ' + user_data['name']
+        ipc.send('setTitle', title)
+        setFormState('select')
+    } else {
+        ipc.send('log', 'User data incomplete.')
+        ipc.send('data', data)
+    }
+    ipc.send('closeAuth')
+}
 
 function selectLocal () {
     resource = {name: 'root'}
@@ -163,7 +158,7 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
     })
 }
 
-var uploadResource = require(path.join(__dirname, '..', 'upload.js'))
+var uploadResource = require(path.join(__dirname, 'upload.js'))
 
 var setFormState = function setFormState(state) {
     switch(state) {
@@ -219,3 +214,5 @@ var setFormState = function setFormState(state) {
             break
     }
 }
+
+initialize()
