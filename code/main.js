@@ -20,12 +20,11 @@ UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('
 var ipc = require('ipc')
 
 var b2s = require(path.join(__dirname, 'bytesToSize.js'))
+var uploader = require(path.join(__dirname, 'upload.js'))
 
 var user_data = {}
 var resource = {}
 var resource_stats = {}
-var dom_resource_name = document.getElementById('resourceNameInput')
-var dom_resource_stats = document.getElementById('resourceStats')
 var renderer_interval
 
 var initialize = function initialize() {
@@ -59,7 +58,7 @@ function selectLocal () {
         if (_paths.length === 1) {
             var single_file = _paths[0]
             op.set(resource, 'name', path.basename(single_file))
-            dom_resource_name.value = resource.name
+            document.getElementById('resourceNameInput').value = resource.name
             fs.stat(single_file, function(err, stats) {
                 if (err) {
                     throw (err)
@@ -86,14 +85,20 @@ function selectLocal () {
 }
 
 var resourceLoaded = function resourceLoaded() {
+    renderResource()
     setFormState('loaded')
     clearInterval(renderer_interval)
+    if (document.getElementById('resourceNameInput').value === '') {
+        document.getElementById('resourceNameInput').focus()
+    }
     // ipc.send('data', resource)
-    renderResource()
+    document.getElementById('uploadResourceButton').onclick = function uploadResource() {
+        uploader.upload()
+    }
 }
 
 var renderResource = function renderResource() {
-    dom_resource_stats.removeAttribute('hidden')
+    document.getElementById('resourceStats').removeAttribute('hidden')
     document.getElementById('resourceDirectories').innerHTML = ''
     document.getElementById('resourceFiles').innerHTML = ''
     document.getElementById('mimeStats').innerHTML = ''
@@ -158,7 +163,6 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
     })
 }
 
-var uploadResource = require(path.join(__dirname, 'upload.js'))
 
 var setFormState = function setFormState(state) {
     switch(state) {

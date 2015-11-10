@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico">
+  </head>
+  <body>
+    <h1 id="userName">Tere</h1>
+    <div id="selectLocal" hidden>
+      <p id="selectLocalMessage">Palun vali fail(id) ja/või kataloog(id), mida soovid üles laadida.</p>
+      <button id="selectLocalButton" onclick="selectLocal()">Vali</button>
+    </div>
+    <div id="resourceName" hidden="">
+      <p id="resourceNameMessage">Muuda ressursi nimi sobivaks.</p>
+      <input id="resourceNameInput" type="text" placeholder="Ressursi nimi" style="width:100%;">
+    </div>
+    <div id="loading" hidden="">
+      <h3>Loen failisüsteemist ...</h3>
+    </div>
+    <div id="resourceStats" hidden="">
+      <ul id="resourceStatsList">
+        <li id="resourceDirectories"></li>
+        <li id="resourceFiles"></li>
+        <ul id="mimeStats"></ul>
+      </ul>
+    </div>
+    <div id="uploadResource" hidden="">
+      <p id="uploadResourceMessage">Ressurss on üleslaadimiseks valmis.</p>
+      <button id="uploadResourceButton">Panusta!</button>
+    </div>
+    <div id="uploading" hidden=""> <span>Kataloogid: </span><span id="uploadedResources">0</span><span>/</span><span id="uploadTotalResources">0</span>
+      <div id="resourceProgressbarOuter">
+        <div id="resourceProgressbarInner">
+          <div id="fileProgressbarInner"></div>
+        </div>
+      </div><span>Failid: </span><span id="uploadedSize">0</span><span>/</span><span id="uploadTotalSize">0</span>
+      <pre id="status"></pre>
+    </div>
+    <div id="thankYou" hidden="">
+        <h3>Aitäh!</h3>
+        <div>
+            <span>Su ressurss on kohal: </span>
+            <a id="resource_entu_link">siin</a>
+        </div>
+    </div>
+    <script src="./main.js"></script>
+  </body>
+</html>

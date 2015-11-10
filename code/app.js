@@ -4,7 +4,6 @@ var path = require('path')
 var fs  = require('fs')
 var ipc = require('ipc')
 var clipboard = require('clipboard')
-var j = require('electron-jade')({pretty: true}, {})
 var BrowserWindow = require('browser-window')
 
 var windows = {}
@@ -52,15 +51,17 @@ app.on('ready', function() {
                 "partition": "persist:panustaja (build " + (pjson.build) + ")",
                 "page-visibility": true, // Prevent throttling DOM timers (app gets less priority while in background)
             }
-            mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
-            mainWindow.setTitle('Panustaja')
-            mainWindow.center()
-            var view_path = path.join(app.getAppPath(), 'code', 'main.jade')
-            mainWindow.webContents.loadUrl('file://' + view_path)
+            setTimeout(function () {
+                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
+                mainWindow.setTitle('Panustaja')
+                mainWindow.center()
+                var view_path = path.join(app.getAppPath(), 'code', 'main.html')
+                mainWindow.webContents.loadUrl('file://' + view_path)
+                if (IS_DEV) {
+                    mainWindow.webContents.openDevTools(true)
+                }
+            }, 1000)
             windows['authWindow'].hide()
-            if (IS_DEV) {
-                mainWindow.webContents.openDevTools(true)
-            }
         } else {
             return
         }

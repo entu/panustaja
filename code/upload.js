@@ -4,6 +4,9 @@ var op = require('object-path')
 var path = require('path')
 var async = require('async')
 
+var remote = require('remote')
+var dialog = remote.require('dialog')
+
 var b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
 
 var resource_root_eid = 4387
@@ -13,12 +16,13 @@ var uploaded_files_progress
 ENTU_API_ENTITY = 'https://entu.keeleressursid.ee/api2/entity'
 ENTU_API_FILE = 'https://entu.keeleressursid.ee/api2/file'
 
-var main = function main() {
+var upload = function upload() {
+    op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
+
     uploaded_resources_progress = 0
     uploaded_files_progress = 0
-    setFormState('uploading')
-    // console.log(JSON.stringify(resource_stats, null, 4))
-    // console.log(JSON.stringify(resource, null, 4))
+    // setFormState('uploading')
+    console.log(JSON.stringify(resource, null, 4))
     document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
     document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
     renderer_interval = setInterval(function () {
@@ -26,20 +30,22 @@ var main = function main() {
     }, 250)
     setFormState('uploading')
     recurseResources(resource_root_eid, resource, resourcesCreated)
-
 }
 
 var resourcesCreated = function resourcesCreated(err) {
     if (err) { throw(err) }
     async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
         setFormState('uploaded')
+        document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
+        document.getElementById('resource_entu_link').onclick = openResourceInBrowser
+        // ipc.send('data', resource)
         clearInterval(renderer_interval)
         renderProgress()
     })
 }
 
 var recurseResources = function recurseResources(parent_eid, resource, resourcesCreatedCB) {
-    // console.log('Recurse under EID:', parent_eid)
+    console.log('Recurse under EID:', parent_eid)
     createEntuResource(parent_eid, resource, function resourceCreatedCB(err, new_eid) {
         if (err) { return resourcesCreatedCB(err) }
         async.each(op.get(resource, ['resources'], []), function iterator(child_resource, callback) {
@@ -52,6 +58,11 @@ var recurseResources = function recurseResources(parent_eid, resource, resources
 }
 
 
+var openResourceInBrowser = function openResourceInBrowser() {
+    require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
+    return false
+}
+
 var renderProgress = function renderProgress() {
     // dom_resource_stats.removeAttribute('hidden')
     document.getElementById('resourceProgressbarInner').style.width = (uploaded_resources_progress * 100 / (resource_stats.directories.count + 1)) + '%'
@@ -62,13 +73,13 @@ var renderProgress = function renderProgress() {
 }
 
 
-module.exports = main
 
 
 var file_upload_tasks = []
 
 
 var createEntuResource = function createEntuResource(parent_eid, resource, callback) {
+    console.log('create under EID:', parent_eid)
     var xhr = new window.XMLHttpRequest()
     xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
@@ -76,8 +87,10 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
     xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
     xhr.onload = function () {
         var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
+        console.log('Looking for new EID:', new_eid)
         if (new_eid) {
-            // console.log('onload new EID:', new_eid)
+            console.log('onload new EID:', new_eid)
+            op.set(resource, ['eid'], new_eid)
             addEntuProperties(new_eid, {
                 "resource-name": path.basename(op.get(resource, ['name'], 'nameless resource')),
                 "resource-uploader-version": UPLOADER_VERSION
@@ -101,6 +114,7 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
         }
     }
     xhr.onerror = function(err) {
+        console.log('error:', err)
         callback(err)
     }
     xhr.send('definition=resource')
@@ -159,3 +173,5 @@ var addEntuProperties = function addEntuProperties(eid, data, callback) {
     }
     xhr.send(data)
 }
+
+module.exports.upload = upload
