@@ -25,13 +25,12 @@ var user_data = {}
 var data = ipc.sendSync('getUser', null)
 
 var initialize = function initialize() {
-    console.log('user_data: ' + data)
     if (!data) {
         data = JSON.parse(clipboard.readText())
         clipboard.clear()
         ipc.send('setUser', data)
     }
-    console.log('user_data: ' + JSON.stringify(data, null, 4))
+    // console.log('user_data: ' + JSON.stringify(data, null, 4))
     if (op.get(data, 'result.user_id', false)) {
         user_data['user_id'] = op.get(data, 'result.user_id')
         user_data['session_key'] = op.get(data, 'result.session_key')

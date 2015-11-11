@@ -18,9 +18,9 @@ var pjson_path = path.join(__dirname, '..', 'package.json')
 var pjson = require(pjson_path)
 if (IS_DEV) {
     pjson.build++
-    console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
     fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 4))
 }
+console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
 app.on('ready', function() {
     USER_PATH = path.join(app.getPath('temp'), 'user.json')
@@ -29,6 +29,7 @@ app.on('ready', function() {
         "partition": "persist:panustaja (build " + (pjson.build) + ")",
     }
     windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
+    windows['authWindow'].webContents.openDevTools(true)
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     windows['authWindow'].center()
     windows['authWindow'].setTitle(title)
