@@ -4,8 +4,8 @@ var op = require('object-path')
 var path = require('path')
 var async = require('async')
 
-var remote = require('remote')
-var dialog = remote.require('dialog')
+// var remote = require('remote')
+// var dialog = remote.require('dialog')
 
 var b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
 
@@ -21,7 +21,6 @@ var upload = function upload() {
 
     uploaded_resources_progress = 0
     uploaded_files_progress = 0
-    // setFormState('uploading')
     console.log(JSON.stringify(resource, null, 4))
     document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
     document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
@@ -120,6 +119,7 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
     xhr.send('definition=resource')
 }
 
+
 var addEntuFile = function addEntuFile(eid, file_path, callback) {
 
     var options = {
@@ -142,6 +142,8 @@ var addEntuFile = function addEntuFile(eid, file_path, callback) {
             callback()
         }
     })
+
+
     var form = req.form()
     var read_stream = fs.createReadStream(file_path)
     form.append('file', read_stream)
@@ -150,10 +152,8 @@ var addEntuFile = function addEntuFile(eid, file_path, callback) {
     form.append('filename', path.basename(file_path))
     read_stream.on('data', function(chunk) {
         uploaded_files_progress += chunk.length
-        // console.log("Uploaded: " + chunk.length)
+        console.log("Uploaded: " + uploaded_files_progress + '(+' + chunk.length + ')')
     })
-    // setInterval(function () {
-    // }, 10)
 }
 
 var addEntuProperties = function addEntuProperties(eid, data, callback) {

@@ -13,7 +13,6 @@ var app = remote.require('app')
 var dialog = remote.require('dialog')
 var clipboard = remote.require('clipboard')
 
-// console.log(path.join(__dirname)) ==> panustaja/code/views
 var pjson = require(path.join(__dirname, '..', 'package.json'))
 UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
@@ -23,18 +22,22 @@ var b2s = require(path.join(__dirname, 'bytesToSize.js'))
 var uploader = require(path.join(__dirname, 'upload.js'))
 
 var user_data = {}
-var resource = {}
-var resource_stats = {}
-var renderer_interval
+var data = ipc.sendSync('getUser', null)
 
 var initialize = function initialize() {
-    var data = JSON.parse(clipboard.readText())
+    console.log('user_data: ' + data)
+    if (!data) {
+        data = JSON.parse(clipboard.readText())
+        clipboard.clear()
+        ipc.send('setUser', data)
+    }
+    console.log('user_data: ' + JSON.stringify(data, null, 4))
     if (op.get(data, 'result.user_id', false)) {
         user_data['user_id'] = op.get(data, 'result.user_id')
         user_data['session_key'] = op.get(data, 'result.session_key')
         user_data['name'] = op.get(data, 'result.name')
         document.getElementById('userName').innerHTML = user_data.name
-        var title = UPLOADER_VERSION + ' | ' + user_data['name']
+        var title = UPLOADER_VERSION + ' | ' + user_data.name
         ipc.send('setTitle', title)
         setFormState('select')
     } else {
@@ -43,6 +46,10 @@ var initialize = function initialize() {
     }
     ipc.send('closeAuth')
 }
+
+var resource = {}
+var resource_stats = {}
+var renderer_interval
 
 function selectLocal () {
     resource = {name: 'root'}

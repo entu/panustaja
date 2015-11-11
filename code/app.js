@@ -60,8 +60,9 @@ app.on('ready', function() {
                 if (IS_DEV) {
                     mainWindow.webContents.openDevTools(true)
                 }
+                windows['authWindow'].close()
+                delete windows['authWindow']
             }, 1000)
-            windows['authWindow'].hide()
         } else {
             return
         }
@@ -79,11 +80,15 @@ ipc.on('setTitle', function(event, message) {
     mainWindow.setTitle(message)
 })
 
-ipc.on('closeAuth', function(event) {
-    if (windows['authWindow']) {
-        windows['authWindow'].close()
-        delete windows['authWindow']
-    }
+var user_data = false
+console.log('user_data: ' + JSON.stringify(user_data, null, 4))
+ipc.on('setUser', function(event, data) {
+    user_data = data
+    console.log('setUser: ' + JSON.stringify(user_data, null, 4))
+})
+ipc.on('getUser', function(event, msg) {
+    event.returnValue = user_data
+    console.log('getUser: ' + JSON.stringify(user_data, null, 4))
 })
 
 app.on('window-all-closed', function() {
