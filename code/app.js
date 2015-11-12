@@ -29,6 +29,7 @@ app.on('ready', function() {
         "partition": "persist:panustaja (build " + (pjson.build) + ")",
     }
     windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
+    // windows['authWindow'].webContents.openDevTools(true)
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     windows['authWindow'].center()
     windows['authWindow'].setTitle(title)
@@ -57,8 +58,8 @@ app.on('ready', function() {
                 mainWindow.center()
                 var view_path = path.join(app.getAppPath(), 'code', 'panu_view.html')
                 mainWindow.webContents.loadUrl('file://' + view_path)
-                    mainWindow.webContents.openDevTools(true)
                 if (IS_DEV) {
+                    mainWindow.webContents.openDevTools(true)
                 }
                 windows['authWindow'].close()
                 delete windows['authWindow']
