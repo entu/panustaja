@@ -101,7 +101,7 @@ var resourceLoaded = function resourceLoaded() {
 }
 
 var renderResource = function renderResource() {
-    console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
+    // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
     document.getElementById('resourceStats').removeAttribute('hidden')
     document.getElementById('resourceDirectories').innerHTML = ''
     document.getElementById('resourceFiles').innerHTML = ''

@@ -84,7 +84,8 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
     xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
     xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
-    xhr.onload = function () {
+    xhr.onload = function (err) {
+        if (err) { return callback(err) }
         var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
         console.log('Looking for new EID:', new_eid)
         if (new_eid) {
