@@ -18,7 +18,11 @@ var pjson_path = path.join(__dirname, '..', 'package.json')
 var pjson = require(pjson_path)
 if (IS_DEV) {
     pjson.build++
+<<<<<<< HEAD
     fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 4))
+=======
+    fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 2))
+>>>>>>> master
 }
 console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
@@ -56,10 +60,10 @@ app.on('ready', function() {
                 mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
                 mainWindow.setTitle('Panustaja')
                 mainWindow.center()
-                var view_path = path.join(app.getAppPath(), 'code', 'main.html')
+                var view_path = path.join(app.getAppPath(), 'code', 'panu_view.html')
                 mainWindow.webContents.loadUrl('file://' + view_path)
-                if (IS_DEV) {
                     mainWindow.webContents.openDevTools(true)
+                if (IS_DEV) {
                 }
                 windows['authWindow'].close()
                 delete windows['authWindow']
@@ -82,14 +86,14 @@ ipc.on('setTitle', function(event, message) {
 })
 
 var user_data = false
-console.log('user_data: ' + JSON.stringify(user_data, null, 4))
+// console.log('user_data: ' + JSON.stringify(user_data, null, 4))
 ipc.on('setUser', function(event, data) {
     user_data = data
-    console.log('setUser: ' + JSON.stringify(user_data, null, 4))
+    // console.log('setUser: ' + JSON.stringify(user_data, null, 4))
 })
 ipc.on('getUser', function(event, msg) {
     event.returnValue = user_data
-    console.log('getUser: ' + JSON.stringify(user_data, null, 4))
+    // console.log('getUser: ' + JSON.stringify(user_data, null, 4))
 })
 
 app.on('window-all-closed', function() {

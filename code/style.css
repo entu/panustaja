@@ -26,3 +26,28 @@
     background-color: #0065CA;
     /*border: 0px solid green;*/
 }
+
+#murakas {
+    text-align: center;
+    font: caption;
+    margin: 0px;
+    position: fixed;
+    top: 1em;
+    right: 1em;
+}
+
+body
+{
+    font: caption;
+	color: WindowText;
+	background-color: Window;
+	/*border: 2px solid ActiveBorder;*/
+}
+h1
+{
+    font: caption;
+	color: WindowText;
+}
+
+/*leave 2 pixels of space between a focus outline and the element that has the focus or is active*/
+:focus,:active  { outline-offset: 2px }
