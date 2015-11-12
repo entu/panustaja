@@ -58,8 +58,8 @@ app.on('ready', function() {
                 mainWindow.center()
                 var view_path = path.join(app.getAppPath(), 'code', 'panu_view.html')
                 mainWindow.webContents.loadUrl('file://' + view_path)
-                if (IS_DEV) {
                     mainWindow.webContents.openDevTools(true)
+                if (IS_DEV) {
                 }
                 windows['authWindow'].close()
                 delete windows['authWindow']
