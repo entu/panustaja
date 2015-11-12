@@ -22,10 +22,6 @@ var user_data = {}
 var data = ipc.sendSync('getUser', null)
 
 var initialize = function initialize() {
-<<<<<<< HEAD:code/main.js
-=======
-    // console.log('user_data: ' + data)
->>>>>>> master:code/panu.js
     if (!data) {
         data = JSON.parse(clipboard.readText())
         clipboard.clear()
