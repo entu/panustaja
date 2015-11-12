@@ -3,10 +3,7 @@ var fs = require('fs')
 var op = require('object-path')
 var path = require('path')
 var async = require('async')
-
-var mmm = require('mmmagic')
-var Magic = mmm.Magic
-var magic = new Magic(mmm.MAGIC_MIME_TYPE | mmm.MAGIC_MIME_ENCODING)
+var mime = require('mime')
 
 var remote = require('remote')
 var app = remote.require('app')
@@ -25,13 +22,13 @@ var user_data = {}
 var data = ipc.sendSync('getUser', null)
 
 var initialize = function initialize() {
-    console.log('user_data: ' + data)
+    // console.log('user_data: ' + data)
     if (!data) {
         data = JSON.parse(clipboard.readText())
         clipboard.clear()
         ipc.send('setUser', data)
     }
-    console.log('user_data: ' + JSON.stringify(data, null, 4))
+    // console.log('user_data: ' + JSON.stringify(data, null, 4))
     if (op.get(data, 'result.user_id', false)) {
         user_data['user_id'] = op.get(data, 'result.user_id')
         user_data['session_key'] = op.get(data, 'result.session_key')
@@ -105,6 +102,7 @@ var resourceLoaded = function resourceLoaded() {
 }
 
 var renderResource = function renderResource() {
+    console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
     document.getElementById('resourceStats').removeAttribute('hidden')
     document.getElementById('resourceDirectories').innerHTML = ''
     document.getElementById('resourceFiles').innerHTML = ''
@@ -130,21 +128,15 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
                 return callback()
             }
             if (stats.isFile()) {
-                magic.detectFile(_path, function(err, result) {
-                    if (err) {
-                        return callback()
-                    }
-                    resource_stats.files.count++
-                    resource_stats.files.size += stats.size
-                    op.push(parent_resource, 'files', _path)
-                    var mime = result.split(';')[0]
-                    var charset = result.split(';')[1].split('=')[1]
-                    op.set(resource_stats, ['mime', mime, 'count'], op.get(resource_stats, ['mime', mime, 'count'], 0) + 1)
-                    op.set(resource_stats, ['mime', mime, 'size'], op.get(resource_stats, ['mime', mime, 'size'], 0) + stats.size)
-                    op.set(resource_stats, ['mime', mime, 'charsets', charset, 'count'], op.get(resource_stats, ['mime', mime, 'charsets', charset, 'count'], 0) + 1)
-                    op.set(resource_stats, ['mime', mime, 'charsets', charset, 'size'], op.get(resource_stats, ['mime', mime, 'charsets', charset, 'size'], 0) + stats.size)
-                    callback()
-                })
+                var mimetype = mime.lookup(_path)
+                // console.log(mimetype)
+                resource_stats.files.count++
+                resource_stats.files.size += stats.size
+                op.push(parent_resource, 'files', _path)
+                var charset = ''
+                op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
+                op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + stats.size)
+                callback()
             } else if (stats.isDirectory()) {
                 resource_stats.directories.count++
                 var directory = {name: _path}
@@ -165,6 +157,7 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
         if( err ) {
             console.log('A file failed to process', err)
         } else {
+            // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
             loadedCB()
         }
     })

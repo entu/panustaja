@@ -18,7 +18,7 @@ var pjson_path = path.join(__dirname, '..', 'package.json')
 var pjson = require(pjson_path)
 if (IS_DEV) {
     pjson.build++
-    fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 4))
+    fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 2))
 }
 console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
