@@ -32,10 +32,11 @@ var upload = function upload() {
 }
 
 var resourcesCreated = function resourcesCreated(err) {
-    // if (err) { throw(err) }
+    if (err) { throw(err) }
     async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
         setFormState('uploaded')
         document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
+        document.getElementById('resource_entu_link').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid
         document.getElementById('resource_entu_link').onclick = openResourceInBrowser
         // ipc.send('data', resource)
         clearInterval(renderer_interval)
@@ -85,7 +86,10 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
     xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
     xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
     xhr.onload = function (err) {
-        if (err) { return callback(err) }
+        // if (err) {
+        //     console.log(err)
+        //     return callback(err)
+        // }
         var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
         console.log('Looking for new EID:', new_eid)
         if (new_eid) {
