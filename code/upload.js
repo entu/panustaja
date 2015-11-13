@@ -32,7 +32,7 @@ var upload = function upload() {
 }
 
 var resourcesCreated = function resourcesCreated(err) {
-    if (err) { throw(err) }
+    // if (err) { throw(err) }
     async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
         setFormState('uploaded')
         document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
