@@ -1,5 +1,8 @@
 #resourceProgressbarOuter {
-    width: 100%;
+    margin-top: 0.5em;
+    left: 1em;
+    right: 120px;
+    position: absolute;
     border-radius: 25px;
     height: 9px;
     background-color: #E8E8C3;
@@ -11,13 +14,6 @@
     height: 100%;
     background-color: #92CC6F;
     /*border: 0px solid green;*/
-}
-#fileProgressbarOuter {
-    width: 100%;
-    border-radius: 25px;
-    height: 9px;
-    background-color: #cdf;
-    border: 0px solid black;
 }
 #fileProgressbarInner {
     width: 0%;
