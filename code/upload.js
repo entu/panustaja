@@ -85,7 +85,7 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
     xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
     xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
-    xhr.onload = function (err) {
+    xhr.onload = function () {
         // if (err) {
         //     console.log(err)
         //     return callback(err)
