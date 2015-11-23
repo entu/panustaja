@@ -6,7 +6,7 @@
     border-radius: 25px;
     height: 9px;
     background-color: #E8E8C3;
-    border: 0px solid black;
+    /*border: 0px solid black;*/
 }
 #resourceProgressbarInner {
     width: 0%;

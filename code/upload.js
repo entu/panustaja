@@ -16,6 +16,8 @@ var uploaded_files_progress
 ENTU_API_ENTITY = 'https://entu.keeleressursid.ee/api2/entity'
 ENTU_API_FILE = 'https://entu.keeleressursid.ee/api2/file'
 
+var renderer_interval
+
 function upload() {
     op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
 

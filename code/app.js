@@ -7,6 +7,7 @@ var clipboard = require('clipboard')
 var BrowserWindow = require('browser-window')
 
 var windows = {}
+var mainWindow
 
 var user_url = 'https://entu.keeleressursid.ee/api2/user'
 var auth_url = user_url + '/auth'
@@ -23,7 +24,7 @@ if (IS_DEV) {
 console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
 app.on('ready', function() {
-    USER_PATH = path.join(app.getPath('temp'), 'user.json')
+    // USER_PATH = path.join(app.getPath('temp'), 'user.json')
 
     var web_preferences = {
         "partition": "persist:panustaja (build " + (pjson.build) + ")",
