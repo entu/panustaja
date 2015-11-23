@@ -157,7 +157,7 @@ function recurseLocal(parent_resource, paths, loadedCB) {
     })
 }
 
-function selectLocal () {
+document.getElementById('selectLocalButton').onclick = function selectLocal () {
     resource = {name: 'root'}
     resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
     dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
@@ -200,6 +200,7 @@ function selectLocal () {
 
 
 function initialize() {
+
     if (!data) {
         data = JSON.parse(clipboard.readText())
         clipboard.clear()
