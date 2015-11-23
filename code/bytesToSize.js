@@ -1,7 +1,7 @@
 var bytesToSize = function bytesToSize(bytes) {
     if (bytes === undefined) bytes = 0
     var sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-    if (bytes == 0) return '0 B'
+    if (bytes === 0) return '0 B'
     try {
         var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
         var decimals = Math.max(0, i-1)
