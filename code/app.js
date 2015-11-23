@@ -29,25 +29,25 @@ app.on('ready', function() {
     var web_preferences = {
         'partition': 'persist:panustaja (build ' + (pjson.build) + ')',
     }
-    windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
-    // windows['authWindow'].webContents.openDevTools(true)
+    windows.authWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
+    // windows.authWindow.webContents.openDevTools(true)
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
-    windows['authWindow'].center()
-    windows['authWindow'].setTitle(title)
-    windows['authWindow'].loadUrl(auth_url)
-    windows['authWindow'].webContents.on('did-get-response-details', function(e, s, new_url) {
-        windows['authWindow'].setTitle(title)
+    windows.authWindow.center()
+    windows.authWindow.setTitle(title)
+    windows.authWindow.loadUrl(auth_url)
+    windows.authWindow.webContents.on('did-get-response-details', function(e, s, new_url) {
+        windows.authWindow.setTitle(title)
         if (new_url === user_url || new_url === user_url + '#') {
-            windows['authWindow'].hide()
+            windows.authWindow.hide()
         }
     })
-    windows['authWindow'].webContents.on('did-finish-load', function() {
-        windows['authWindow'].setTitle(title)
-        var new_url = windows['authWindow'].webContents.getUrl()
+    windows.authWindow.webContents.on('did-finish-load', function() {
+        windows.authWindow.setTitle(title)
+        var new_url = windows.authWindow.webContents.getUrl()
         if (new_url === user_url || new_url === user_url + '#') {
             clipboard.clear()
-            windows['authWindow'].webContents.selectAll()
-            windows['authWindow'].webContents.copy()
+            windows.authWindow.webContents.selectAll()
+            windows.authWindow.webContents.copy()
 
             var web_preferences = {
                 'partition': 'persist:panustaja (build ' + (pjson.build) + ')',
@@ -62,8 +62,8 @@ app.on('ready', function() {
                 mainWindow.webContents.openDevTools(true)
                 if (IS_DEV) {
                 }
-                windows['authWindow'].close()
-                delete windows['authWindow']
+                windows.authWindow.close()
+                delete windows.authWindow
             }, 1000)
         } else {
             return

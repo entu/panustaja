@@ -133,7 +133,6 @@ function recurseLocal(parent_resource, paths, loadedCB) {
                 resource_stats.files.count++
                 resource_stats.files.size += stats.size
                 op.push(parent_resource, 'files', _path)
-                var charset = ''
                 op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
                 op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + stats.size)
                 callback()
