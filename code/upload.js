@@ -16,7 +16,7 @@ var uploaded_files_progress
 ENTU_API_ENTITY = 'https://entu.keeleressursid.ee/api2/entity'
 ENTU_API_FILE = 'https://entu.keeleressursid.ee/api2/file'
 
-var upload = function upload() {
+function upload() {
     op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
 
     uploaded_resources_progress = 0
@@ -31,7 +31,7 @@ var upload = function upload() {
     recurseResources(resource_root_eid, resource, resourcesCreated)
 }
 
-var resourcesCreated = function resourcesCreated(err) {
+function resourcesCreated(err) {
     if (err) { throw(err) }
     async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
         setFormState('uploaded')
@@ -44,7 +44,7 @@ var resourcesCreated = function resourcesCreated(err) {
     })
 }
 
-var recurseResources = function recurseResources(parent_eid, resource, resourcesCreatedCB) {
+function recurseResources(parent_eid, resource, resourcesCreatedCB) {
     console.log('Recurse under EID:', parent_eid)
     createEntuResource(parent_eid, resource, function resourceCreatedCB(err, new_eid) {
         if (err) { return resourcesCreatedCB(err) }
@@ -58,12 +58,12 @@ var recurseResources = function recurseResources(parent_eid, resource, resources
 }
 
 
-var openResourceInBrowser = function openResourceInBrowser() {
+function openResourceInBrowser() {
     require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
     return false
 }
 
-var renderProgress = function renderProgress() {
+function renderProgress() {
     // dom_resource_stats.removeAttribute('hidden')
     document.getElementById('resourceProgressbarInner').style.width = (uploaded_resources_progress * 100 / (resource_stats.directories.count + 1)) + '%'
     document.getElementById('uploadedResources').innerHTML = uploaded_resources_progress
@@ -78,7 +78,7 @@ var renderProgress = function renderProgress() {
 var file_upload_tasks = []
 
 
-var createEntuResource = function createEntuResource(parent_eid, resource, callback) {
+function createEntuResource(parent_eid, resource, callback) {
     console.log('create under EID:', parent_eid)
     var xhr = new window.XMLHttpRequest()
     xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
@@ -125,7 +125,7 @@ var createEntuResource = function createEntuResource(parent_eid, resource, callb
 }
 
 
-var addEntuFile = function addEntuFile(eid, file_path, callback) {
+function addEntuFile(eid, file_path, callback) {
 
     var options = {
         url: ENTU_API_FILE,
@@ -161,7 +161,7 @@ var addEntuFile = function addEntuFile(eid, file_path, callback) {
     })
 }
 
-var addEntuProperties = function addEntuProperties(eid, data, callback) {
+function addEntuProperties(eid, data, callback) {
     var url_data = Object.keys(data).map(function (ix) {return ix + '=' + data[ix]}).join('&')
     // console.log(url_data)
     var xhr = new window.XMLHttpRequest()

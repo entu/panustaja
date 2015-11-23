@@ -21,7 +21,7 @@ var uploader = require(path.join(__dirname, 'upload.js'))
 var user_data = {}
 var data = ipc.sendSync('getUser', null)
 
-var initialize = function initialize() {
+function initialize() {
     if (!data) {
         data = JSON.parse(clipboard.readText())
         clipboard.clear()
@@ -46,6 +46,27 @@ var initialize = function initialize() {
 var resource = {}
 var resource_stats = {}
 var renderer_interval
+
+
+function renderResource() {
+    // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
+    document.getElementById('resourceStats').removeAttribute('hidden')
+    document.getElementById('resourceDirectories').innerHTML = ''
+    document.getElementById('resourceFiles').innerHTML = ''
+    document.getElementById('mimeStats').innerHTML = ''
+    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resource_stats.directories.count))
+    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resource_stats.files.count + ' | ' + b2s(resource_stats.files.size)))
+    Object.keys(resource_stats.mime).forEach(function (mime_type_name) {
+        var text_node = document.createTextNode(
+            mime_type_name
+            + ': ' + op.get(resource_stats, ['mime', mime_type_name, 'count'])
+            + ' | ' + b2s(op.get(resource_stats, ['mime', mime_type_name, 'size']))
+        )
+        var li_node = document.createElement('LI')
+        li_node.appendChild(text_node)
+        document.getElementById('mimeStats').appendChild(li_node)
+    })
+}
 
 function selectLocal () {
     resource = {name: 'root'}
@@ -87,7 +108,7 @@ function selectLocal () {
     })
 }
 
-var resourceLoaded = function resourceLoaded() {
+function resourceLoaded() {
     renderResource()
     setFormState('loaded')
     clearInterval(renderer_interval)
@@ -100,27 +121,7 @@ var resourceLoaded = function resourceLoaded() {
     }
 }
 
-var renderResource = function renderResource() {
-    // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
-    document.getElementById('resourceStats').removeAttribute('hidden')
-    document.getElementById('resourceDirectories').innerHTML = ''
-    document.getElementById('resourceFiles').innerHTML = ''
-    document.getElementById('mimeStats').innerHTML = ''
-    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resource_stats.directories.count))
-    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resource_stats.files.count + ' | ' + b2s(resource_stats.files.size)))
-    Object.keys(resource_stats.mime).forEach(function (mime_type_name) {
-        var text_node = document.createTextNode(
-            mime_type_name
-            + ': ' + op.get(resource_stats, ['mime', mime_type_name, 'count'])
-            + ' | ' + b2s(op.get(resource_stats, ['mime', mime_type_name, 'size']))
-        )
-        var li_node = document.createElement('LI')
-        li_node.appendChild(text_node)
-        document.getElementById('mimeStats').appendChild(li_node)
-    })
-}
-
-var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
+function recurseLocal(parent_resource, paths, loadedCB) {
     async.each(paths, function iterator(_path, callback) {
         fs.stat(_path, function(err, stats) {
             if (err) {
@@ -163,7 +164,7 @@ var recurseLocal = function recurseLocal(parent_resource, paths, loadedCB) {
 }
 
 
-var setFormState = function setFormState(state) {
+function setFormState(state) {
     switch(state) {
         case 'select':
             document.getElementById('selectLocal').removeAttribute('hidden')
