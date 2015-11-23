@@ -116,13 +116,13 @@ function resourceLoaded() {
     }
 }
 
-function registerFile(parent_resource, _path, stats, callback) {
-    var mimetype = mime.lookup(_path)
+function registerMime(parent_resource, filepath, filesize, callback) {
     resource_stats.files.count++
-    resource_stats.files.size += stats.size
-    op.push(parent_resource, 'files', _path)
+    resource_stats.files.size += filesize
+    var mimetype = mime.lookup(filepath)
+    op.push(parent_resource, 'files', filepath)
     op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
-    op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + stats.size)
+    op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + filesize)
     callback()
 }
 
@@ -131,18 +131,15 @@ function recurseLocal(parent_resource, paths, loadedCB) {
         fs.stat(_path, function(err, stats) {
             if (err) { return callback() }
             if (stats.isFile()) {
-                registerFile(parent_resource, _path, stats, callback)
+                registerMime(parent_resource, _path, stats.size, callback)
             } else if (stats.isDirectory()) {
                 resource_stats.directories.count++
                 var directory = {name: _path}
                 op.push(parent_resource, 'resources', directory)
                 fs.readdir(_path, function(err, files) {
-                    if (err) {
-                        return callback(err)
-                    }
+                    if (err) { return callback(err) }
                     var _paths = files.map(function(file) {
-                        var fullpath = path.join(_path, file)
-                        return fullpath
+                        return path.join(_path, file)
                     })
                     recurseLocal(directory, _paths, callback)
                 })
@@ -200,27 +197,22 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
 
 
 
-function initialize() {
-
-    if (!data) {
-        data = JSON.parse(clipboard.readText())
-        clipboard.clear()
-        ipc.send('setUser', data)
-    }
-    // console.log('user_data: ' + JSON.stringify(data, null, 4))
-    if (op.get(data, 'result.user_id', false)) {
-        user_data.user_id = op.get(data, 'result.user_id')
-        user_data.session_key = op.get(data, 'result.session_key')
-        user_data.name = op.get(data, 'result.name')
-        document.getElementById('userName').innerHTML = user_data.name
-        var title = UPLOADER_VERSION + ' | ' + user_data.name
-        ipc.send('setTitle', title)
-        setFormState('select')
-    } else {
-        ipc.send('log', 'User data incomplete.')
-        ipc.send('data', data)
-    }
-    ipc.send('closeAuth')
+if (!data) {
+    data = JSON.parse(clipboard.readText())
+    clipboard.clear()
+    ipc.send('setUser', data)
 }
-
-initialize()
+// console.log('user_data: ' + JSON.stringify(data, null, 4))
+if (op.get(data, 'result.user_id', false)) {
+    user_data.user_id = op.get(data, 'result.user_id')
+    user_data.session_key = op.get(data, 'result.session_key')
+    user_data.name = op.get(data, 'result.name')
+    document.getElementById('userName').innerHTML = user_data.name
+    var title = UPLOADER_VERSION + ' | ' + user_data.name
+    ipc.send('setTitle', title)
+    setFormState('select')
+} else {
+    ipc.send('log', 'User data incomplete.')
+    ipc.send('data', data)
+}
+ipc.send('closeAuth')
