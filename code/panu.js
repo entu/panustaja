@@ -6,7 +6,7 @@ var async = require('async')
 var mime = require('mime')
 
 var remote = require('remote')
-var app = remote.require('app')
+// var app = remote.require('app')
 var dialog = remote.require('dialog')
 var clipboard = remote.require('clipboard')
 

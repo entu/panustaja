@@ -27,9 +27,9 @@ app.on('ready', function() {
     // USER_PATH = path.join(app.getPath('temp'), 'user.json')
 
     var web_preferences = {
-        "partition": "persist:panustaja (build " + (pjson.build) + ")",
+        'partition': 'persist:panustaja (build ' + (pjson.build) + ')',
     }
-    windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
+    windows['authWindow'] = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
     // windows['authWindow'].webContents.openDevTools(true)
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     windows['authWindow'].center()
@@ -50,11 +50,11 @@ app.on('ready', function() {
             windows['authWindow'].webContents.copy()
 
             var web_preferences = {
-                "partition": "persist:panustaja (build " + (pjson.build) + ")",
-                "page-visibility": true, // Prevent throttling DOM timers (app gets less priority while in background)
+                'partition': 'persist:panustaja (build ' + (pjson.build) + ')',
+                'page-visibility': true, // Prevent throttling DOM timers (app gets less priority while in background)
             }
             setTimeout(function () {
-                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, "web-preferences": web_preferences })
+                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
                 mainWindow.setTitle('Panustaja')
                 mainWindow.center()
                 var view_path = path.join(app.getAppPath(), 'code', 'panu_view.html')

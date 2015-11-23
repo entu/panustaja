@@ -52,18 +52,18 @@ function addEntuFile(eid, file_path, callback) {
     var options = {
         url: ENTU_API_FILE,
         headers: {
-            'X-Auth-UserId': user_data['user_id'],
-            'X-Auth-Token': user_data['session_key'],
+            'X-Auth-UserId': user_data.user_id,
+            'X-Auth-Token': user_data.session_key,
             'User-Agent': UPLOADER_VERSION
         }
     }
 
-    var req = request.post(options, function (err, resp, body) {
+    // var req = request.post(options, function (err, resp, body) {
+    var req = request.post(options, function (err) {
         // console.log(err, resp, JSON.parse(body))
         if (err) {
             callback(err)
-        // } else if (resp.status.statusCode !== 200) {
-        //     callback(body)
+        // } else if (resp.status.statusCode !== 200) { callback(body) }
         } else {
             // console.log('URL: ' + body)
             callback()
@@ -79,7 +79,7 @@ function addEntuFile(eid, file_path, callback) {
     form.append('filename', path.basename(file_path))
     read_stream.on('data', function(chunk) {
         uploaded_files_progress += chunk.length
-        console.log("Uploaded: " + uploaded_files_progress + '(+' + chunk.length + ')')
+        console.log('Uploaded: ' + uploaded_files_progress + '(+' + chunk.length + ')')
     })
 }
 
@@ -88,8 +88,8 @@ function addEntuProperties(eid, data, callback) {
     // console.log(url_data)
     var xhr = new window.XMLHttpRequest()
     xhr.open('PUT', ENTU_API_ENTITY + '-' + eid + '?' + url_data, true)
-    xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
-    xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
+    xhr.setRequestHeader('X-Auth-UserId', user_data.user_id)
+    xhr.setRequestHeader('X-Auth-Token', user_data.session_key)
     xhr.onload = function () {
         var response = JSON.parse(this.responseText)
         // console.log(JSON.stringify({sent:data, got:response}, null, 4))
@@ -105,9 +105,9 @@ function createEntuResource(parent_eid, resource, callback) {
     console.log('create under EID:', parent_eid)
     var xhr = new window.XMLHttpRequest()
     xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
-    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
-    xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
-    xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+    xhr.setRequestHeader('X-Auth-UserId', user_data.user_id)
+    xhr.setRequestHeader('X-Auth-Token', user_data.session_key)
     xhr.onload = function () {
         // if (err) {
         //     console.log(err)
@@ -119,8 +119,8 @@ function createEntuResource(parent_eid, resource, callback) {
             console.log('onload new EID:', new_eid)
             op.set(resource, ['eid'], new_eid)
             addEntuProperties(new_eid, {
-                "resource-name": path.basename(op.get(resource, ['name'], 'nameless resource')),
-                "resource-uploader-version": UPLOADER_VERSION
+                'resource-name': path.basename(op.get(resource, ['name'], 'nameless resource')),
+                'resource-uploader-version': UPLOADER_VERSION
             }, function(err) {
                 if (err) { return callback(err) }
                 uploaded_resources_progress++
