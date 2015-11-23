@@ -132,7 +132,8 @@ function recurseLocal(parent_resource, paths, loadedCB) {
             if (err) { return callback() }
             if (stats.isFile()) {
                 registerMime(parent_resource, _path, stats.size, callback)
-            } else if (stats.isDirectory()) {
+            }
+            else if (stats.isDirectory()) {
                 resource_stats.directories.count++
                 var directory = {name: _path}
                 op.push(parent_resource, 'resources', directory)
@@ -159,12 +160,8 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
     resource = {name: 'root'}
     resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
     dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
-        if (!_paths) {
-            return
-        }
-        renderer_interval = setInterval(function () {
-            renderResource()
-        }, 100)
+        if (!_paths) { return }
+        renderer_interval = setInterval(function () { renderResource() }, 100)
         setFormState('loading')
         if (_paths.length === 1) {
             var single_file = _paths[0]
