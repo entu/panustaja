@@ -116,21 +116,22 @@ function resourceLoaded() {
     }
 }
 
+function registerFile(parent_resource, _path, stats, callback) {
+    var mimetype = mime.lookup(_path)
+    resource_stats.files.count++
+    resource_stats.files.size += stats.size
+    op.push(parent_resource, 'files', _path)
+    op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
+    op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + stats.size)
+    callback()
+}
+
 function recurseLocal(parent_resource, paths, loadedCB) {
     async.each(paths, function iterator(_path, callback) {
         fs.stat(_path, function(err, stats) {
-            if (err) {
-                return callback()
-            }
+            if (err) { return callback() }
             if (stats.isFile()) {
-                var mimetype = mime.lookup(_path)
-                // console.log(mimetype)
-                resource_stats.files.count++
-                resource_stats.files.size += stats.size
-                op.push(parent_resource, 'files', _path)
-                op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
-                op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + stats.size)
-                callback()
+                registerFile(parent_resource, _path, stats, callback)
             } else if (stats.isDirectory()) {
                 resource_stats.directories.count++
                 var directory = {name: _path}
