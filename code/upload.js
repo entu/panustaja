@@ -57,7 +57,6 @@ function addEntuFile(eid, file_path, callback) {
         }
     }
 
-    // var req = request.post(options, function (err, resp, body) {
     var req = request.post(options, function (err) {
         // console.log(err, resp, JSON.parse(body))
         if (err) {
@@ -69,13 +68,11 @@ function addEntuFile(eid, file_path, callback) {
         }
     })
 
-
-    var form = req.form()
     var read_stream = fs.createReadStream(file_path)
-    form.append('file', read_stream)
-    form.append('entity', eid)
-    form.append('property', 'resource-file')
-    form.append('filename', path.basename(file_path))
+    req.form.append('file', read_stream)
+    req.form.append('entity', eid)
+    req.form.append('property', 'resource-file')
+    req.form.append('filename', path.basename(file_path))
     read_stream.on('data', function(chunk) {
         uploaded_files_progress += chunk.length
         console.log('Uploaded: ' + uploaded_files_progress + '(+' + chunk.length + ')')

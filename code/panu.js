@@ -168,14 +168,10 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
             op.set(resource, 'name', path.basename(single_file))
             document.getElementById('resourceNameInput').value = resource.name
             fs.stat(single_file, function(err, stats) {
-                if (err) {
-                    throw (err)
-                }
+                if (err) { throw (err) }
                 if (stats.isDirectory()) {
                     fs.readdir(single_file, function(err, files) {
-                        if (err) {
-                            throw (err)
-                        }
+                        if (err) { throw (err) }
                         _paths = files.map(function(file) {
                             var fullpath = path.join(single_file, file)
                             return fullpath
