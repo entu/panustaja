@@ -21,27 +21,62 @@ var uploader = require(path.join(__dirname, 'upload.js'))
 var user_data = {}
 var data = ipc.sendSync('getUser', null)
 
-function initialize() {
-    if (!data) {
-        data = JSON.parse(clipboard.readText())
-        clipboard.clear()
-        ipc.send('setUser', data)
+function setFormState(state) {
+    switch(state) {
+        case 'select':
+            document.getElementById('selectLocal').removeAttribute('hidden')
+            // ---
+            document.getElementById('loading').setAttribute('hidden', '')
+            document.getElementById('resourceStats').setAttribute('hidden', '')
+            document.getElementById('uploading').setAttribute('hidden', '')
+            document.getElementById('uploadResource').setAttribute('hidden', '')
+            document.getElementById('resourceName').setAttribute('hidden', '')
+            // ---
+            // document.getElementById('uploading').removeAttribute('hidden')
+            break
+        case 'loading':
+            document.getElementById('loading').removeAttribute('hidden')
+            document.getElementById('resourceStats').removeAttribute('hidden')
+            // -------- //
+            document.getElementById('uploading').setAttribute('hidden', '')
+            document.getElementById('uploadResource').setAttribute('hidden', '')
+            document.getElementById('selectLocal').setAttribute('hidden', '')
+            document.getElementById('resourceName').setAttribute('hidden', '')
+            break
+        case 'loaded':
+            document.getElementById('resourceStats').removeAttribute('hidden')
+            document.getElementById('uploadResource').removeAttribute('hidden')
+            document.getElementById('selectLocal').removeAttribute('hidden')
+            document.getElementById('selectLocalButton').innerHTML = 'Vali uuesti'
+            document.getElementById('resourceName').removeAttribute('hidden')
+            // -------- //
+            document.getElementById('loading').setAttribute('hidden', '')
+            document.getElementById('uploading').setAttribute('hidden', '')
+            break
+        case 'uploading':
+            document.getElementById('uploading').removeAttribute('hidden')
+            // -------- //
+            document.getElementById('loading').setAttribute('hidden', '')
+            document.getElementById('resourceStats').setAttribute('hidden', '')
+            document.getElementById('uploadResource').setAttribute('hidden', '')
+            document.getElementById('selectLocal').setAttribute('hidden', '')
+            document.getElementById('resourceName').setAttribute('hidden', '')
+            break
+        case 'uploaded':
+            document.getElementById('thankYou').removeAttribute('hidden')
+            // -------- //
+            document.getElementById('resourceStats').setAttribute('hidden', '')
+            document.getElementById('uploadResource').setAttribute('hidden', '')
+            document.getElementById('selectLocal').setAttribute('hidden', '')
+            document.getElementById('selectLocalButton').innerHTML = 'Vali uuesti'
+            document.getElementById('resourceName').setAttribute('hidden', '')
+            document.getElementById('loading').setAttribute('hidden', '')
+            document.getElementById('uploading').setAttribute('hidden', '')
+            break
     }
-    // console.log('user_data: ' + JSON.stringify(data, null, 4))
-    if (op.get(data, 'result.user_id', false)) {
-        user_data.user_id = op.get(data, 'result.user_id')
-        user_data.session_key = op.get(data, 'result.session_key')
-        user_data.name = op.get(data, 'result.name')
-        document.getElementById('userName').innerHTML = user_data.name
-        var title = UPLOADER_VERSION + ' | ' + user_data.name
-        ipc.send('setTitle', title)
-        setFormState('select')
-    } else {
-        ipc.send('log', 'User data incomplete.')
-        ipc.send('data', data)
-    }
-    ipc.send('closeAuth')
 }
+
+
 
 var resource = {}
 var resource_stats = {}
@@ -65,46 +100,6 @@ function renderResource() {
         var li_node = document.createElement('LI')
         li_node.appendChild(text_node)
         document.getElementById('mimeStats').appendChild(li_node)
-    })
-}
-
-function selectLocal () {
-    resource = {name: 'root'}
-    resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
-    dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
-        if (!_paths) {
-            return
-        }
-        renderer_interval = setInterval(function () {
-            renderResource()
-        }, 100)
-        setFormState('loading')
-        if (_paths.length === 1) {
-            var single_file = _paths[0]
-            op.set(resource, 'name', path.basename(single_file))
-            document.getElementById('resourceNameInput').value = resource.name
-            fs.stat(single_file, function(err, stats) {
-                if (err) {
-                    throw (err)
-                }
-                if (stats.isDirectory()) {
-                    fs.readdir(single_file, function(err, files) {
-                        if (err) {
-                            throw (err)
-                        }
-                        _paths = files.map(function(file) {
-                            var fullpath = path.join(single_file, file)
-                            return fullpath
-                        })
-                        recurseLocal(resource, _paths, resourceLoaded)
-                    })
-                } else {
-                    recurseLocal(resource, _paths, resourceLoaded)
-                }
-            })
-        } else {
-            recurseLocal(resource, _paths, resourceLoaded)
-        }
     })
 }
 
@@ -162,60 +157,68 @@ function recurseLocal(parent_resource, paths, loadedCB) {
     })
 }
 
+function selectLocal () {
+    resource = {name: 'root'}
+    resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
+    dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
+        if (!_paths) {
+            return
+        }
+        renderer_interval = setInterval(function () {
+            renderResource()
+        }, 100)
+        setFormState('loading')
+        if (_paths.length === 1) {
+            var single_file = _paths[0]
+            op.set(resource, 'name', path.basename(single_file))
+            document.getElementById('resourceNameInput').value = resource.name
+            fs.stat(single_file, function(err, stats) {
+                if (err) {
+                    throw (err)
+                }
+                if (stats.isDirectory()) {
+                    fs.readdir(single_file, function(err, files) {
+                        if (err) {
+                            throw (err)
+                        }
+                        _paths = files.map(function(file) {
+                            var fullpath = path.join(single_file, file)
+                            return fullpath
+                        })
+                        recurseLocal(resource, _paths, resourceLoaded)
+                    })
+                } else {
+                    recurseLocal(resource, _paths, resourceLoaded)
+                }
+            })
+        } else {
+            recurseLocal(resource, _paths, resourceLoaded)
+        }
+    })
+}
 
-function setFormState(state) {
-    switch(state) {
-        case 'select':
-            document.getElementById('selectLocal').removeAttribute('hidden')
-            // ---
-            document.getElementById('loading').setAttribute('hidden', '')
-            document.getElementById('resourceStats').setAttribute('hidden', '')
-            document.getElementById('uploading').setAttribute('hidden', '')
-            document.getElementById('uploadResource').setAttribute('hidden', '')
-            document.getElementById('resourceName').setAttribute('hidden', '')
-            // ---
-            // document.getElementById('uploading').removeAttribute('hidden')
-            break
-        case 'loading':
-            document.getElementById('loading').removeAttribute('hidden')
-            document.getElementById('resourceStats').removeAttribute('hidden')
-            // -------- //
-            document.getElementById('uploading').setAttribute('hidden', '')
-            document.getElementById('uploadResource').setAttribute('hidden', '')
-            document.getElementById('selectLocal').setAttribute('hidden', '')
-            document.getElementById('resourceName').setAttribute('hidden', '')
-            break
-        case 'loaded':
-            document.getElementById('resourceStats').removeAttribute('hidden')
-            document.getElementById('uploadResource').removeAttribute('hidden')
-            document.getElementById('selectLocal').removeAttribute('hidden')
-            document.getElementById('selectLocalButton').innerHTML = 'Vali uuesti'
-            document.getElementById('resourceName').removeAttribute('hidden')
-            // -------- //
-            document.getElementById('loading').setAttribute('hidden', '')
-            document.getElementById('uploading').setAttribute('hidden', '')
-            break
-        case 'uploading':
-            document.getElementById('uploading').removeAttribute('hidden')
-            // -------- //
-            document.getElementById('loading').setAttribute('hidden', '')
-            document.getElementById('resourceStats').setAttribute('hidden', '')
-            document.getElementById('uploadResource').setAttribute('hidden', '')
-            document.getElementById('selectLocal').setAttribute('hidden', '')
-            document.getElementById('resourceName').setAttribute('hidden', '')
-            break
-        case 'uploaded':
-            document.getElementById('thankYou').removeAttribute('hidden')
-            // -------- //
-            document.getElementById('resourceStats').setAttribute('hidden', '')
-            document.getElementById('uploadResource').setAttribute('hidden', '')
-            document.getElementById('selectLocal').setAttribute('hidden', '')
-            document.getElementById('selectLocalButton').innerHTML = 'Vali uuesti'
-            document.getElementById('resourceName').setAttribute('hidden', '')
-            document.getElementById('loading').setAttribute('hidden', '')
-            document.getElementById('uploading').setAttribute('hidden', '')
-            break
+
+
+function initialize() {
+    if (!data) {
+        data = JSON.parse(clipboard.readText())
+        clipboard.clear()
+        ipc.send('setUser', data)
     }
+    // console.log('user_data: ' + JSON.stringify(data, null, 4))
+    if (op.get(data, 'result.user_id', false)) {
+        user_data.user_id = op.get(data, 'result.user_id')
+        user_data.session_key = op.get(data, 'result.session_key')
+        user_data.name = op.get(data, 'result.name')
+        document.getElementById('userName').innerHTML = user_data.name
+        var title = UPLOADER_VERSION + ' | ' + user_data.name
+        ipc.send('setTitle', title)
+        setFormState('select')
+    } else {
+        ipc.send('log', 'User data incomplete.')
+        ipc.send('data', data)
+    }
+    ipc.send('closeAuth')
 }
 
 initialize()
