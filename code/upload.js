@@ -18,49 +18,7 @@ ENTU_API_FILE = 'https://entu.keeleressursid.ee/api2/file'
 
 var renderer_interval
 
-function upload() {
-    op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
-
-    uploaded_resources_progress = 0
-    uploaded_files_progress = 0
-    console.log(JSON.stringify(resource, null, 4))
-    document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
-    document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
-    renderer_interval = setInterval(function () {
-        renderProgress()
-    }, 250)
-    setFormState('uploading')
-    recurseResources(resource_root_eid, resource, resourcesCreated)
-}
-
 var file_upload_tasks = []
-
-function resourcesCreated(err) {
-    if (err) { throw(err) }
-    async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
-        setFormState('uploaded')
-        document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
-        document.getElementById('resource_entu_link').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid
-        document.getElementById('resource_entu_link').onclick = openResourceInBrowser
-        // ipc.send('data', resource)
-        clearInterval(renderer_interval)
-        renderProgress()
-    })
-}
-
-function recurseResources(parent_eid, resource, resourcesCreatedCB) {
-    console.log('Recurse under EID:', parent_eid)
-    createEntuResource(parent_eid, resource, function resourceCreatedCB(err, new_eid) {
-        if (err) { return resourcesCreatedCB(err) }
-        async.each(op.get(resource, ['resources'], []), function iterator(child_resource, callback) {
-            recurseResources(new_eid, child_resource, callback)
-        }, function(err){
-            if( err ) { return resourcesCreatedCB(err) }
-            resourcesCreatedCB()
-        })
-    })
-}
-
 
 function openResourceInBrowser() {
     require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
@@ -76,55 +34,18 @@ function renderProgress() {
     document.getElementById('uploadedSize').innerHTML = b2s(uploaded_files_progress)
 }
 
-
-
-
-function createEntuResource(parent_eid, resource, callback) {
-    console.log('create under EID:', parent_eid)
-    var xhr = new window.XMLHttpRequest()
-    xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
-    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
-    xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
-    xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
-    xhr.onload = function () {
-        // if (err) {
-        //     console.log(err)
-        //     return callback(err)
-        // }
-        var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
-        console.log('Looking for new EID:', new_eid)
-        if (new_eid) {
-            console.log('onload new EID:', new_eid)
-            op.set(resource, ['eid'], new_eid)
-            addEntuProperties(new_eid, {
-                "resource-name": path.basename(op.get(resource, ['name'], 'nameless resource')),
-                "resource-uploader-version": UPLOADER_VERSION
-            }, function(err) {
-                if (err) { return callback(err) }
-                uploaded_resources_progress++
-                op.get(resource, ['files'], []).forEach(function(file_path) {
-                    file_upload_tasks.push(function uploadFile(callback) {
-                        document.getElementById('status').innerHTML = new_eid + ' : ' + file_path
-                        // console.log('F: Uploading file ' + file_path + ' at resource ' + new_eid)
-                        addEntuFile(new_eid, file_path, function fileAddedCB() {
-                            callback()
-                        })
-                    })
-                    // console.log('F: Queued file ' + file_path + ' for upload at resource ' + new_eid)
-                })
-                callback(null, new_eid)
-            })
-        } else {
-            callback('ERROR: ', this.responseText)
-        }
-    }
-    xhr.onerror = function(err) {
-        console.log('error:', err)
-        callback(err)
-    }
-    xhr.send('definition=resource')
+function resourcesCreated(err) {
+    if (err) { throw(err) }
+    async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
+        setFormState('uploaded')
+        document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
+        document.getElementById('resource_entu_link').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid
+        document.getElementById('resource_entu_link').onclick = openResourceInBrowser
+        // ipc.send('data', resource)
+        clearInterval(renderer_interval)
+        renderProgress()
+    })
 }
-
 
 function addEntuFile(eid, file_path, callback) {
 
@@ -179,5 +100,80 @@ function addEntuProperties(eid, data, callback) {
     }
     xhr.send(data)
 }
+
+function createEntuResource(parent_eid, resource, callback) {
+    console.log('create under EID:', parent_eid)
+    var xhr = new window.XMLHttpRequest()
+    xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
+    xhr.setRequestHeader('X-Auth-UserId', user_data['user_id'])
+    xhr.setRequestHeader('X-Auth-Token', user_data['session_key'])
+    xhr.onload = function () {
+        // if (err) {
+        //     console.log(err)
+        //     return callback(err)
+        // }
+        var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
+        console.log('Looking for new EID:', new_eid)
+        if (new_eid) {
+            console.log('onload new EID:', new_eid)
+            op.set(resource, ['eid'], new_eid)
+            addEntuProperties(new_eid, {
+                "resource-name": path.basename(op.get(resource, ['name'], 'nameless resource')),
+                "resource-uploader-version": UPLOADER_VERSION
+            }, function(err) {
+                if (err) { return callback(err) }
+                uploaded_resources_progress++
+                op.get(resource, ['files'], []).forEach(function(file_path) {
+                    file_upload_tasks.push(function uploadFile(callback) {
+                        document.getElementById('status').innerHTML = new_eid + ' : ' + file_path
+                        // console.log('F: Uploading file ' + file_path + ' at resource ' + new_eid)
+                        addEntuFile(new_eid, file_path, function fileAddedCB() {
+                            callback()
+                        })
+                    })
+                    // console.log('F: Queued file ' + file_path + ' for upload at resource ' + new_eid)
+                })
+                callback(null, new_eid)
+            })
+        } else {
+            callback('ERROR: ', this.responseText)
+        }
+    }
+    xhr.onerror = function(err) {
+        console.log('error:', err)
+        callback(err)
+    }
+    xhr.send('definition=resource')
+}
+
+function recurseResources(parent_eid, resource, resourcesCreatedCB) {
+    console.log('Recurse under EID:', parent_eid)
+    createEntuResource(parent_eid, resource, function resourceCreatedCB(err, new_eid) {
+        if (err) { return resourcesCreatedCB(err) }
+        async.each(op.get(resource, ['resources'], []), function iterator(child_resource, callback) {
+            recurseResources(new_eid, child_resource, callback)
+        }, function(err){
+            if( err ) { return resourcesCreatedCB(err) }
+            resourcesCreatedCB()
+        })
+    })
+}
+
+function upload() {
+    op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
+
+    uploaded_resources_progress = 0
+    uploaded_files_progress = 0
+    console.log(JSON.stringify(resource, null, 4))
+    document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
+    document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
+    renderer_interval = setInterval(function () {
+        renderProgress()
+    }, 250)
+    setFormState('uploading')
+    recurseResources(resource_root_eid, resource, resourcesCreated)
+}
+
 
 module.exports.upload = upload

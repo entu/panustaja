@@ -9,14 +9,14 @@
     /*border: 0px solid black;*/
 }
 #resourceProgressbarInner {
-    width: 0%;
+    width: 0;
     border-radius: 25px;
     height: 100%;
     background-color: #92CC6F;
     /*border: 0px solid green;*/
 }
 #fileProgressbarInner {
-    width: 0%;
+    width: 0;
     border-radius: 25px;
     height: 100%;
     background-color: #0065CA;
@@ -26,7 +26,7 @@
 #murakas {
     text-align: center;
     font: caption;
-    margin: 0px;
+    margin: 0;
     position: fixed;
     top: 1em;
     right: 1em;
