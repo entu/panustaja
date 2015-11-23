@@ -33,6 +33,8 @@ function upload() {
     recurseResources(resource_root_eid, resource, resourcesCreated)
 }
 
+var file_upload_tasks = []
+
 function resourcesCreated(err) {
     if (err) { throw(err) }
     async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
@@ -75,9 +77,6 @@ function renderProgress() {
 }
 
 
-
-
-var file_upload_tasks = []
 
 
 function createEntuResource(parent_eid, resource, callback) {
