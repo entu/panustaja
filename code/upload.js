@@ -10,7 +10,6 @@ var async = require('async')
 var b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
 
 var resource_root_eid = 4387
-var i = 0
 var uploaded_resources_progress
 var uploaded_files_progress
 ENTU_API_ENTITY = 'https://entu.keeleressursid.ee/api2/entity'
@@ -91,7 +90,7 @@ function addEntuProperties(eid, data, callback) {
     xhr.setRequestHeader('X-Auth-UserId', user_data.user_id)
     xhr.setRequestHeader('X-Auth-Token', user_data.session_key)
     xhr.onload = function () {
-        var response = JSON.parse(this.responseText)
+        // var response = JSON.parse(this.responseText)
         // console.log(JSON.stringify({sent:data, got:response}, null, 4))
         callback()
     }

@@ -1,4 +1,4 @@
-var request = require('request')
+// var request = require('request')
 var fs = require('fs')
 var op = require('object-path')
 var path = require('path')
@@ -29,9 +29,9 @@ function initialize() {
     }
     // console.log('user_data: ' + JSON.stringify(data, null, 4))
     if (op.get(data, 'result.user_id', false)) {
-        user_data['user_id'] = op.get(data, 'result.user_id')
-        user_data['session_key'] = op.get(data, 'result.session_key')
-        user_data['name'] = op.get(data, 'result.name')
+        user_data.user_id = op.get(data, 'result.user_id')
+        user_data.session_key = op.get(data, 'result.session_key')
+        user_data.name = op.get(data, 'result.name')
         document.getElementById('userName').innerHTML = user_data.name
         var title = UPLOADER_VERSION + ' | ' + user_data.name
         ipc.send('setTitle', title)

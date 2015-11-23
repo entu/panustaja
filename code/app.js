@@ -1,5 +1,5 @@
 var app = require('app')
-var op  = require('object-path')
+// var op  = require('object-path')
 var path = require('path')
 var fs  = require('fs')
 var ipc = require('ipc')
@@ -88,7 +88,7 @@ ipc.on('setUser', function(event, data) {
     user_data = data
     // console.log('setUser: ' + JSON.stringify(user_data, null, 4))
 })
-ipc.on('getUser', function(event, msg) {
+ipc.on('getUser', function(event) {
     event.returnValue = user_data
     // console.log('getUser: ' + JSON.stringify(user_data, null, 4))
 })
