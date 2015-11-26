@@ -163,16 +163,24 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
         if (myPaths.length === 1) {
             var singleFile = myPaths[0]
             op.set(resource, 'name', path.basename(singleFile))
+            document.getElementById('resourceNameInput').value = resource.name
+            fs.stat(single_file, function(err, stats) {
                 if (err) { throw (err) }
                 if (stats.isDirectory()) {
+                    fs.readdir(single_file, function(err, files) {
                         if (err) { throw (err) }
+                        _paths = files.map(function(file) {
+                            var fullpath = path.join(single_file, file)
                             return fullpath
                         })
+                        recurseLocal(resource, _paths, resourceLoaded)
                     })
                 } else {
+                    recurseLocal(resource, _paths, resourceLoaded)
                 }
             })
         } else {
+            recurseLocal(resource, _paths, resourceLoaded)
         }
     })
 }
