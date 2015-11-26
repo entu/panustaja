@@ -9,53 +9,53 @@ var BrowserWindow = require('browser-window')
 var windows = {}
 var mainWindow
 
-var user_url = 'https://entu.keeleressursid.ee/api2/user'
-var auth_url = user_url + '/auth'
+var userUrl = 'https://entu.keeleressursid.ee/api2/user'
+var authUrl = userUrl + '/auth'
 
 
-IS_DEV = process.env.DEV ? true : false
+ISDEV = process.env.DEV ? true : false
 
-var pjson_path = path.join(__dirname, '..', 'package.json')
-var pjson = require(pjson_path)
-if (IS_DEV) {
+var pjsonPath = path.join(__dirname, '..', 'package.json')
+var pjson = require(pjsonPath)
+if (ISDEV) {
     pjson.build++
-    fs.writeFileSync(pjson_path, JSON.stringify(pjson, null, 2))
+    fs.writeFileSync(pjsonPath, JSON.stringify(pjson, null, 2))
 }
 console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
-var web_preferences = {
+var webPreferences = {
     'partition': 'persist:panustaja (build ' + (pjson.build) + ')',
     'page-visibility': true, // Prevent throttling DOM timers (app gets less priority while in background)
 }
 app.on('ready', function() {
-    windows.authWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
+    windows.authWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': webPreferences })
     // windows.authWindow.webContents.openDevTools(true)
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     windows.authWindow.center()
     windows.authWindow.setTitle(title)
-    windows.authWindow.loadUrl(auth_url)
-    windows.authWindow.webContents.on('did-get-response-details', function(e, s, new_url) {
+    windows.authWindow.loadUrl(authUrl)
+    windows.authWindow.webContents.on('did-get-response-details', function(e, s, newUrl) {
         windows.authWindow.setTitle(title)
-        if (new_url === user_url || new_url === user_url + '#') {
+        if (newUrl === userUrl || newUrl === userUrl + '#') {
             windows.authWindow.hide()
         }
     })
     windows.authWindow.webContents.on('did-finish-load', function() {
         windows.authWindow.setTitle(title)
-        var new_url = windows.authWindow.webContents.getUrl()
-        if (new_url === user_url || new_url === user_url + '#') {
+        var newUrl = windows.authWindow.webContents.getUrl()
+        if (newUrl === userUrl || newUrl === userUrl + '#') {
             clipboard.clear()
             windows.authWindow.webContents.selectAll()
             windows.authWindow.webContents.copy()
 
             setTimeout(function () {
-                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': web_preferences })
+                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, 'web-preferences': webPreferences })
                 mainWindow.setTitle('Panustaja')
                 mainWindow.center()
-                var view_path = path.join(app.getAppPath(), 'code', 'panu_view.html')
-                mainWindow.webContents.loadUrl('file://' + view_path)
-                mainWindow.webContents.openDevTools(true)
-                if (IS_DEV) {
+                var viewPath = path.join(app.getAppPath(), 'code', 'panuView.html')
+                mainWindow.webContents.loadUrl('file://' + viewPath)
+                if (ISDEV) {
+                    mainWindow.webContents.openDevTools(true)
                 }
                 windows.authWindow.close()
                 delete windows.authWindow
@@ -77,15 +77,15 @@ ipc.on('setTitle', function(event, message) {
     mainWindow.setTitle(message)
 })
 
-var user_data = false
-// console.log('user_data: ' + JSON.stringify(user_data, null, 4))
+var userData = false
+// console.log('userData: ' + JSON.stringify(userData, null, 4))
 ipc.on('setUser', function(event, data) {
-    user_data = data
-    // console.log('setUser: ' + JSON.stringify(user_data, null, 4))
+    userData = data
+    // console.log('setUser: ' + JSON.stringify(userData, null, 4))
 })
 ipc.on('getUser', function(event) {
-    event.returnValue = user_data
-    // console.log('getUser: ' + JSON.stringify(user_data, null, 4))
+    event.returnValue = userData
+    // console.log('getUser: ' + JSON.stringify(userData, null, 4))
 })
 
 app.on('window-all-closed', function() {

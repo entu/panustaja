@@ -11,14 +11,14 @@ var dialog = remote.require('dialog')
 var clipboard = remote.require('clipboard')
 
 var pjson = require(path.join(__dirname, '..', 'package.json'))
-UPLOADER_VERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
+UPLOADERVERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
 var ipc = require('ipc')
 
 var b2s = require(path.join(__dirname, 'bytesToSize.js'))
 var uploader = require(path.join(__dirname, 'upload.js'))
 
-var user_data = {}
+var userData = {}
 var data = ipc.sendSync('getUser', null)
 
 function setFormState(state) {
@@ -79,70 +79,67 @@ function setFormState(state) {
 
 
 var resource = {}
-var resource_stats = {}
-var renderer_interval
+var resourceStats = {}
+var rendererInterval
 
 
 function renderResource() {
-    // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
+    // console.log(JSON.stringify(op.get(resourceStats, 'mime'), null, 2))
     document.getElementById('resourceStats').removeAttribute('hidden')
     document.getElementById('resourceDirectories').innerHTML = ''
     document.getElementById('resourceFiles').innerHTML = ''
     document.getElementById('mimeStats').innerHTML = ''
-    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resource_stats.directories.count))
-    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resource_stats.files.count + ' | ' + b2s(resource_stats.files.size)))
-    Object.keys(resource_stats.mime).forEach(function (mime_type_name) {
-        var text_node = document.createTextNode(
-            mime_type_name
-            + ': ' + op.get(resource_stats, ['mime', mime_type_name, 'count'])
-            + ' | ' + b2s(op.get(resource_stats, ['mime', mime_type_name, 'size']))
+    document.getElementById('resourceDirectories').appendChild(document.createTextNode('Katalooge: ' + resourceStats.directories.count))
+    document.getElementById('resourceFiles').appendChild(document.createTextNode('Faile: ' + resourceStats.files.count + ' | ' + b2s(resourceStats.files.size)))
+    Object.keys(resourceStats.mime).forEach(function (mimeTypeName) {
+        var textNode = document.createTextNode(
+            mimeTypeName
+            + ': ' + op.get(resourceStats, ['mime', mimeTypeName, 'count'])
+            + ' | ' + b2s(op.get(resourceStats, ['mime', mimeTypeName, 'size']))
         )
-        var li_node = document.createElement('LI')
-        li_node.appendChild(text_node)
-        document.getElementById('mimeStats').appendChild(li_node)
+        var liNode = document.createElement('LI')
+        liNode.appendChild(textNode)
+        document.getElementById('mimeStats').appendChild(liNode)
     })
 }
 
 function resourceLoaded() {
     renderResource()
     setFormState('loaded')
-    clearInterval(renderer_interval)
-    if (document.getElementById('resourceNameInput').value === '') {
-        document.getElementById('resourceNameInput').focus()
-    }
+    clearInterval(rendererInterval)
     // ipc.send('data', resource)
     document.getElementById('uploadResourceButton').onclick = function uploadResource() {
         uploader.upload()
     }
 }
 
-function registerMime(parent_resource, filepath, filesize, callback) {
-    resource_stats.files.count++
-    resource_stats.files.size += filesize
+function registerMime(parentResource, filepath, filesize, callback) {
+    resourceStats.files.count++
+    resourceStats.files.size += filesize
     var mimetype = mime.lookup(filepath)
-    op.push(parent_resource, 'files', filepath)
-    op.set(resource_stats, ['mime', mimetype, 'count'], op.get(resource_stats, ['mime', mimetype, 'count'], 0) + 1)
-    op.set(resource_stats, ['mime', mimetype, 'size'], op.get(resource_stats, ['mime', mimetype, 'size'], 0) + filesize)
+    op.push(parentResource, 'files', filepath)
+    op.set(resourceStats, ['mime', mimetype, 'count'], op.get(resourceStats, ['mime', mimetype, 'count'], 0) + 1)
+    op.set(resourceStats, ['mime', mimetype, 'size'], op.get(resourceStats, ['mime', mimetype, 'size'], 0) + filesize)
     callback()
 }
 
-function recurseLocal(parent_resource, paths, loadedCB) {
-    async.each(paths, function iterator(_path, callback) {
-        fs.stat(_path, function(err, stats) {
+function recurseLocal(parentResource, paths, loadedCB) {
+    async.each(paths, function iterator(myPath, callback) {
+        fs.stat(myPath, function(err, stats) {
             if (err) { return callback() }
             if (stats.isFile()) {
-                registerMime(parent_resource, _path, stats.size, callback)
+                registerMime(parentResource, myPath, stats.size, callback)
             }
             else if (stats.isDirectory()) {
-                resource_stats.directories.count++
-                var directory = {name: _path}
-                op.push(parent_resource, 'resources', directory)
-                fs.readdir(_path, function(err, files) {
+                resourceStats.directories.count++
+                var directory = {name: myPath}
+                op.push(parentResource, 'resources', directory)
+                fs.readdir(myPath, function(err, files) {
                     if (err) { return callback(err) }
-                    var _paths = files.map(function(file) {
-                        return path.join(_path, file)
+                    var myPaths = files.map(function(file) {
+                        return path.join(myPath, file)
                     })
-                    recurseLocal(directory, _paths, callback)
+                    recurseLocal(directory, myPaths, callback)
                 })
             }
         })
@@ -150,7 +147,7 @@ function recurseLocal(parent_resource, paths, loadedCB) {
         if( err ) {
             console.log('A file failed to process', err)
         } else {
-            // console.log(JSON.stringify(op.get(resource_stats, 'mime'), null, 2))
+            // console.log(JSON.stringify(op.get(resourceStats, 'mime'), null, 2))
             loadedCB()
         }
     })
@@ -158,32 +155,24 @@ function recurseLocal(parent_resource, paths, loadedCB) {
 
 document.getElementById('selectLocalButton').onclick = function selectLocal () {
     resource = {name: 'root'}
-    resource_stats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
-    dialog.showOpenDialog({properties:['openFile', 'openDirectory', 'multiSelections']}, function selectedPath(_paths) {
-        if (!_paths) { return }
-        renderer_interval = setInterval(function () { renderResource() }, 100)
+    resourceStats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
+    dialog.showOpenDialog({properties:['openFile', 'openDirectory']}, function selectedPath(myPaths) {
+        if (!myPaths) { return }
+        rendererInterval = setInterval(function () { renderResource() }, 100)
         setFormState('loading')
-        if (_paths.length === 1) {
-            var single_file = _paths[0]
-            op.set(resource, 'name', path.basename(single_file))
-            document.getElementById('resourceNameInput').value = resource.name
-            fs.stat(single_file, function(err, stats) {
+        if (myPaths.length === 1) {
+            var singleFile = myPaths[0]
+            op.set(resource, 'name', path.basename(singleFile))
                 if (err) { throw (err) }
                 if (stats.isDirectory()) {
-                    fs.readdir(single_file, function(err, files) {
                         if (err) { throw (err) }
-                        _paths = files.map(function(file) {
-                            var fullpath = path.join(single_file, file)
                             return fullpath
                         })
-                        recurseLocal(resource, _paths, resourceLoaded)
                     })
                 } else {
-                    recurseLocal(resource, _paths, resourceLoaded)
                 }
             })
         } else {
-            recurseLocal(resource, _paths, resourceLoaded)
         }
     })
 }
@@ -195,13 +184,7 @@ if (!data) {
     clipboard.clear()
     ipc.send('setUser', data)
 }
-// console.log('user_data: ' + JSON.stringify(data, null, 4))
 if (op.get(data, 'result.user_id', false)) {
-    user_data.user_id = op.get(data, 'result.user_id')
-    user_data.session_key = op.get(data, 'result.session_key')
-    user_data.name = op.get(data, 'result.name')
-    document.getElementById('userName').innerHTML = user_data.name
-    var title = UPLOADER_VERSION + ' | ' + user_data.name
     ipc.send('setTitle', title)
     setFormState('select')
 } else {

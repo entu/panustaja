@@ -9,51 +9,36 @@ var async = require('async')
 
 var b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
 
-var resource_root_eid = 4387
-var uploaded_resources_progress
-var uploaded_files_progress
-ENTU_API_ENTITY = 'https://entu.keeleressursid.ee/api2/entity'
-ENTU_API_FILE = 'https://entu.keeleressursid.ee/api2/file'
+var resourceRootEid = 4387
+var uploadedResourcesProgress
+var uploadedFilesProgress
+ENTUAPI = 'https://entu.keeleressursid.ee/api2'
+ENTUAPIENTITY = 'https://entu.keeleressursid.ee/api2/entity'
+ENTUAPIFILE = 'https://entu.keeleressursid.ee/api2/file'
 
-var renderer_interval
+var rendererInterval
 
-var file_upload_tasks = []
+var fileUploadTasks = []
 
-function openResourceInBrowser() {
-    require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
-    return false
-}
 
 function renderProgress() {
-    // dom_resource_stats.removeAttribute('hidden')
-    document.getElementById('resourceProgressbarInner').style.width = (uploaded_resources_progress * 100 / (resource_stats.directories.count + 1)) + '%'
-    document.getElementById('uploadedResources').innerHTML = uploaded_resources_progress
-    document.getElementById('fileProgressbarInner').style.width = (uploaded_files_progress * 100 / resource_stats.files.size) + '%'
-    // console.log('== LOGGING: ', uploaded_files_progress, resource_stats.files.size, resource_stats.files.count)
-    document.getElementById('uploadedSize').innerHTML = b2s(uploaded_files_progress)
+    // domResourceStats.removeAttribute('hidden')
+    document.getElementById('resourceProgressbarInner').style.width = (uploadedResourcesProgress * 100 / (resourceStats.directories.count + 1)) + '%'
+    document.getElementById('uploadedResources').innerHTML = uploadedResourcesProgress
+    document.getElementById('fileProgressbarInner').style.width = (uploadedFilesProgress * 100 / resourceStats.files.size) + '%'
+    // console.log('== LOGGING: ', uploadedFilesProgress, resourceStats.files.size, resourceStats.files.count)
+    document.getElementById('uploadedSize').innerHTML = b2s(uploadedFilesProgress)
 }
 
-function resourcesCreated(err) {
-    if (err) { throw(err) }
-    async.parallelLimit(file_upload_tasks, 3, function filesUploaded() {
-        setFormState('uploaded')
-        document.getElementById('resource_entu_link').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid)
-        document.getElementById('resource_entu_link').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + resource.eid
-        document.getElementById('resource_entu_link').onclick = openResourceInBrowser
-        // ipc.send('data', resource)
-        clearInterval(renderer_interval)
-        renderProgress()
-    })
-}
 
-function addEntuFile(eid, file_path, callback) {
+function addEntuFile(eid, filePath, callback) {
 
     var options = {
-        url: ENTU_API_FILE,
+        url: ENTUAPIFILE,
         headers: {
-            'X-Auth-UserId': user_data.user_id,
-            'X-Auth-Token': user_data.session_key,
-            'User-Agent': UPLOADER_VERSION
+            'X-Auth-UserId': userData.userId,
+            'X-Auth-Token': userData.sessionKey,
+            'User-Agent': UPLOADERVERSION
         }
     }
 
@@ -71,24 +56,39 @@ function addEntuFile(eid, file_path, callback) {
 
 
     var form = req.form()
-    var read_stream = fs.createReadStream(file_path)
-    form.append('file', read_stream)
+    var readStream = fs.createReadStream(filePath)
+    form.append('file', readStream)
     form.append('entity', eid)
     form.append('property', 'resource-file')
-    form.append('filename', path.basename(file_path))
-    read_stream.on('data', function(chunk) {
-        uploaded_files_progress += chunk.length
-        console.log('Uploaded: ' + uploaded_files_progress + '(+' + chunk.length + ')')
+    form.append('filename', path.basename(filePath))
+    readStream.on('data', function(chunk) {
+        uploadedFilesProgress += chunk.length
+        // console.log('Uploaded: ' + uploadedFilesProgress + '(+' + chunk.length + ')')
     })
 }
 
 function addEntuProperties(eid, data, callback) {
-    var url_data = Object.keys(data).map(function (ix) {return ix + '=' + data[ix]}).join('&')
-    // console.log(url_data)
+
+    request.put({
+        url: preparedUrl,
+        headers: headers,
+        body: qb,
+        strictSSL: true,
+        json: true,
+        timeout: 60000
+    }, function(error, response, body) {
+        if(error) return callback(error)
+        if(response.statusCode !== 201 || !body.result) return callback(new Error(op.get(body, 'error', body)))
+
+        callback(null, op.get(body, 'result.properties.' + property + '.0', null))
+    })
+
+    var urlData = Object.keys(data).map(function (ix) {return ix + '=' + data[ix]}).join('&')
+    // console.log(urlData)
     var xhr = new window.XMLHttpRequest()
-    xhr.open('PUT', ENTU_API_ENTITY + '-' + eid + '?' + url_data, true)
-    xhr.setRequestHeader('X-Auth-UserId', user_data.user_id)
-    xhr.setRequestHeader('X-Auth-Token', user_data.session_key)
+    xhr.open('PUT', ENTUAPIENTITY + '-' + eid + '?' + urlData, true)
+    xhr.setRequestHeader('X-Auth-UserId', userData.userId)
+    xhr.setRequestHeader('X-Auth-Token', userData.sessionKey)
     xhr.onload = function () {
         // var response = JSON.parse(this.responseText)
         // console.log(JSON.stringify({sent:data, got:response}, null, 4))
@@ -100,79 +100,108 @@ function addEntuProperties(eid, data, callback) {
     xhr.send(data)
 }
 
-function createEntuResource(parent_eid, resource, callback) {
-    console.log('create under EID:', parent_eid)
-    var xhr = new window.XMLHttpRequest()
-    xhr.open('POST', ENTU_API_ENTITY + '-' + parent_eid, true)
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
-    xhr.setRequestHeader('X-Auth-UserId', user_data.user_id)
-    xhr.setRequestHeader('X-Auth-Token', user_data.session_key)
-    xhr.onload = function () {
-        // if (err) {
-        //     console.log(err)
-        //     return callback(err)
-        // }
-        var new_eid = op.get(JSON.parse(this.responseText), ['result', 'id'], false)
-        console.log('Looking for new EID:', new_eid)
-        if (new_eid) {
-            console.log('onload new EID:', new_eid)
-            op.set(resource, ['eid'], new_eid)
-            addEntuProperties(new_eid, {
-                'resource-name': path.basename(op.get(resource, ['name'], 'nameless resource')),
-                'resource-uploader-version': UPLOADER_VERSION
-            }, function(err) {
-                if (err) { return callback(err) }
-                uploaded_resources_progress++
-                op.get(resource, ['files'], []).forEach(function(file_path) {
-                    file_upload_tasks.push(function uploadFile(callback) {
-                        document.getElementById('status').innerHTML = new_eid + ' : ' + file_path
-                        // console.log('F: Uploading file ' + file_path + ' at resource ' + new_eid)
-                        addEntuFile(new_eid, file_path, function fileAddedCB() {
-                            callback()
-                        })
-                    })
-                    // console.log('F: Queued file ' + file_path + ' for upload at resource ' + new_eid)
+function createEntuResource(parentEid, resource, callback) {
+    // console.log('create under EID:', parentEid)
+
+    var body = {
+        'definition': 'resource',
+        'resource-name': path.basename(op.get(resource, ['name'], 'nameless resource')),
+        'resource-uploader-version': UPLOADERVERSION
+    }
+    if (op.get(resource, ['mime-encode'], false)) {
+        op.set(body, ['resource-mime-encode'], op.get(resource, ['mime-encode']))
+    }
+    if (op.get(resource, ['size'], false)) {
+        op.set(body, ['resource-size'], op.get(resource, ['size']))
+    }
+
+    var preparedUrl = ENTUAPIENTITY + '-' + parentEid
+    var headers = {'X-Auth-UserId': userData.userId, 'X-Auth-Token': userData.sessionKey}
+
+    // console.log('Try to execute URL ' + preparedUrl, userData, body)
+    request.post({
+        url: preparedUrl,
+        headers: headers,
+        body: body,
+        strictSSL: true,
+        json: true,
+        timeout: 60000
+    }, function(error, response, body) {
+        // console.log('result', body)
+        if(error) return callback(error)
+        if(response.statusCode !== 201) return callback(new Error(op.get(body, 'error', body)))
+
+        var newEid = body.result.id
+        uploadedResourcesProgress++
+        op.get(resource, ['files'], []).forEach(function(filePath) {
+            fileUploadTasks.push(function uploadFile(callback) {
+                document.getElementById('status').innerHTML = newEid + ' : ' + filePath
+                // console.log('F: Uploading file ' + filePath + ' at resource ' + newEid)
+                addEntuFile(newEid, filePath, function fileAddedCB() {
+                    callback()
                 })
-                callback(null, new_eid)
             })
-        } else {
-            callback('ERROR: ', this.responseText)
-        }
-    }
-    xhr.onerror = function(err) {
-        console.log('error:', err)
-        callback(err)
-    }
-    xhr.send('definition=resource')
+            // console.log('F: Queued file ' + filePath + ' for upload at resource ' + newEid)
+        })
+
+        callback(null, newEid)
+    })
 }
 
-function recurseResources(parent_eid, resource, resourcesCreatedCB) {
-    console.log('Recurse under EID:', parent_eid)
-    createEntuResource(parent_eid, resource, function resourceCreatedCB(err, new_eid) {
+function recurseResources(parentEid, resource, resourcesCreatedCB) {
+    // console.log('Recurse under EID:', parentEid)
+    createEntuResource(parentEid, resource, function resourceCreatedCB(err, newEid) {
         if (err) { return resourcesCreatedCB(err) }
-        async.each(op.get(resource, ['resources'], []), function iterator(child_resource, callback) {
-            recurseResources(new_eid, child_resource, callback)
+        async.each(op.get(resource, ['resources'], []), function iterator(childResource, callback) {
+            recurseResources(newEid, childResource, callback)
         }, function(err){
             if( err ) { return resourcesCreatedCB(err) }
-            resourcesCreatedCB()
+            // console.log('Created:', newEid)
+            resourcesCreatedCB(null, newEid)
         })
     })
 }
 
 function upload() {
-    op.set(resource, ['name'], document.getElementById('resourceNameInput').value)
+    op.set(resource, ['size'], b2s(resourceStats.files.size))
+    op.set(resource, ['mime-encode'], JSON.stringify(resourceStats.mime, null, 4))
 
-    uploaded_resources_progress = 0
-    uploaded_files_progress = 0
-    console.log(JSON.stringify(resource, null, 4))
-    document.getElementById('uploadTotalResources').innerHTML = (resource_stats.directories.count + 1)
-    document.getElementById('uploadTotalSize').innerHTML = b2s(resource_stats.files.size)
-    renderer_interval = setInterval(function () {
+    uploadedResourcesProgress = 0
+    uploadedFilesProgress = 0
+    // console.log(JSON.stringify(resource, null, 4))
+    document.getElementById('uploadTotalResources').innerHTML = (resourceStats.directories.count + 1)
+    document.getElementById('uploadTotalSize').innerHTML = b2s(resourceStats.files.size)
+    rendererInterval = setInterval(function () {
         renderProgress()
     }, 250)
     setFormState('uploading')
-    recurseResources(resource_root_eid, resource, resourcesCreated)
+    async.waterfall([
+        function runRecurseResources(callback) {
+            recurseResources(resourceRootEid, resource, function resourcesCreated(err, newEid) {
+                if (err) { return callback(err) }
+                callback(null, newEid)
+            })
+        },
+        function runFileUploadTasks(newEid, callback) {
+            async.parallelLimit(fileUploadTasks, 3, function filesUploaded() { callback(null, newEid) })
+        },
+        function updateUI(newEid, callback) {
+            setFormState('uploaded')
+            document.getElementById('resourceEntuLink').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + newEid)
+            document.getElementById('resourceEntuLink').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + newEid
+            document.getElementById('resourceEntuLink').onclick = function openResourceInBrowser() {
+                require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + newEid)
+                return false
+            }
+            // ipc.send('data', resource)
+            clearInterval(rendererInterval)
+            renderProgress()
+        }
+    ], function(err) {
+        if (err) { return err }
+    })
 }
+
 
 
 module.exports.upload = upload
