@@ -163,24 +163,24 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
         if (myPaths.length === 1) {
             var singleFile = myPaths[0]
             op.set(resource, 'name', path.basename(singleFile))
-            document.getElementById('resourceNameInput').value = resource.name
-            fs.stat(single_file, function(err, stats) {
+            document.getElementById('resourceName').value = resource.name
+            fs.stat(singleFile, function(err, stats) {
                 if (err) { throw (err) }
                 if (stats.isDirectory()) {
-                    fs.readdir(single_file, function(err, files) {
+                    fs.readdir(singleFile, function(err, files) {
                         if (err) { throw (err) }
-                        _paths = files.map(function(file) {
-                            var fullpath = path.join(single_file, file)
+                        myPaths = files.map(function(file) {
+                            var fullpath = path.join(singleFile, file)
                             return fullpath
                         })
-                        recurseLocal(resource, _paths, resourceLoaded)
+                        recurseLocal(resource, myPaths, resourceLoaded)
                     })
                 } else {
-                    recurseLocal(resource, _paths, resourceLoaded)
+                    recurseLocal(resource, myPaths, resourceLoaded)
                 }
             })
         } else {
-            recurseLocal(resource, _paths, resourceLoaded)
+            recurseLocal(resource, myPaths, resourceLoaded)
         }
     })
 }
@@ -193,6 +193,11 @@ if (!data) {
     ipc.send('setUser', data)
 }
 if (op.get(data, 'result.user_id', false)) {
+    userData.userId = op.get(data, 'result.user_id')
+    userData.sessionKey = op.get(data, 'result.session_key')
+    userData.name = op.get(data, 'result.name')
+    document.getElementById('userName').innerHTML = userData.name
+    var title = UPLOADERVERSION + ' | ' + userData.name
     ipc.send('setTitle', title)
     setFormState('select')
 } else {
