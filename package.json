@@ -2,7 +2,7 @@
   "name": "Panustaja",
   "description": "Ressursikataloogi upitamiseks keeleressurside Entu repositooriumisse.",
   "version": "1.0.1-d",
-  "build": 102,
+  "build": 103,
   "main": "./code/app.js",
   "license": "CC-SA",
   "private": true,
@@ -16,6 +16,5 @@
     "object-path": "^0.9.2",
     "request": "^2.65.0"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
