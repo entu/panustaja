@@ -1,27 +1,24 @@
-// var request = require('request')
 var fs = require('fs')
 var op = require('object-path')
 var path = require('path')
 var async = require('async')
 var mime = require('mime')
 
-var remote = require('remote')
-// var app = remote.require('app')
-var dialog = remote.require('dialog')
-var clipboard = remote.require('clipboard')
+const { clipboard, dialog } = require('electron').remote
+const { ipcRenderer } = require('electron')
 
 var pjson = require(path.join(__dirname, '..', 'package.json'))
 UPLOADERVERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
-var ipc = require('ipc')
 
 var b2s = require(path.join(__dirname, 'bytesToSize.js'))
 var uploader = require(path.join(__dirname, 'upload.js'))
 
 var userData = {}
-var data = ipc.sendSync('getUser', null)
+var data = ipcRenderer.sendSync('getUser', null)
 
 function setFormState(state) {
+    console.log('Entering form state:', state)
     switch(state) {
         case 'select':
             document.getElementById('selectLocal').removeAttribute('hidden')
@@ -107,7 +104,7 @@ function resourceLoaded() {
     renderResource()
     setFormState('loaded')
     clearInterval(rendererInterval)
-    // ipc.send('data', resource)
+    // ipcRenderer.send('data', resource)
     document.getElementById('uploadResourceButton').onclick = function uploadResource() {
         uploader.upload()
     }
@@ -156,33 +153,38 @@ function recurseLocal(parentResource, paths, loadedCB) {
 document.getElementById('selectLocalButton').onclick = function selectLocal () {
     resource = {name: 'root'}
     resourceStats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
-    dialog.showOpenDialog({properties:['openFile', 'openDirectory']}, function selectedPath(myPaths) {
-        if (!myPaths) { return }
-        rendererInterval = setInterval(function () { renderResource() }, 100)
-        setFormState('loading')
-        if (myPaths.length === 1) {
-            var singleFile = myPaths[0]
-            op.set(resource, 'name', path.basename(singleFile))
-            document.getElementById('resourceName').value = resource.name
-            fs.stat(singleFile, function(err, stats) {
-                if (err) { throw (err) }
-                if (stats.isDirectory()) {
-                    fs.readdir(singleFile, function(err, files) {
-                        if (err) { throw (err) }
-                        myPaths = files.map(function(file) {
-                            var fullpath = path.join(singleFile, file)
-                            return fullpath
-                        })
-                        recurseLocal(resource, myPaths, resourceLoaded)
+    const dialogOptions = {
+        message: "Vali meelepärane kataloog",
+        properties: ['openFile', 'openDirectory']
+    }
+
+    let myPaths = dialog.showOpenDialogSync(dialogOptions)
+
+    if (!myPaths) { return }
+    rendererInterval = setInterval(function () { renderResource() }, 100)
+    setFormState('loading')
+    if (myPaths.length === 1) {
+        var singleFile = myPaths[0]
+        op.set(resource, 'name', path.basename(singleFile))
+        document.getElementById('resourceName').value = resource.name
+        fs.stat(singleFile, function(err, stats) {
+            if (err) { throw (err) }
+            if (stats.isDirectory()) {
+                fs.readdir(singleFile, function(err, files) {
+                    if (err) { throw (err) }
+                    myPaths = files.map(function(file) {
+                        var fullpath = path.join(singleFile, file)
+                        return fullpath
                     })
-                } else {
                     recurseLocal(resource, myPaths, resourceLoaded)
-                }
-            })
-        } else {
-            recurseLocal(resource, myPaths, resourceLoaded)
-        }
-    })
+                })
+            } else {
+                recurseLocal(resource, myPaths, resourceLoaded)
+            }
+        })
+    } else {
+        recurseLocal(resource, myPaths, resourceLoaded)
+    }
 }
 
 
@@ -190,7 +192,7 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
 if (!data) {
     data = JSON.parse(clipboard.readText())
     clipboard.clear()
-    ipc.send('setUser', data)
+    ipcRenderer.send('setUser', data)
 }
 if (op.get(data, 'result.user_id', false)) {
     userData.userId = op.get(data, 'result.user_id')
@@ -198,10 +200,10 @@ if (op.get(data, 'result.user_id', false)) {
     userData.name = op.get(data, 'result.name')
     document.getElementById('userName').innerHTML = userData.name
     var title = UPLOADERVERSION + ' | ' + userData.name
-    ipc.send('setTitle', title)
+    ipcRenderer.send('setTitle', title)
     setFormState('select')
 } else {
-    ipc.send('log', 'User data incomplete.')
-    ipc.send('data', data)
+    ipcRenderer.send('log', 'User data incomplete.')
+    ipcRenderer.send('data', data)
 }
-ipc.send('closeAuth')
+ipcRenderer.send('closeAuth')

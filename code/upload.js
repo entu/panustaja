@@ -4,6 +4,8 @@ var op = require('object-path')
 var path = require('path')
 var async = require('async')
 
+const { shell } = require('electron').remote
+
 // var remote = require('remote')
 // var dialog = remote.require('dialog')
 
@@ -190,7 +192,7 @@ function upload() {
             document.getElementById('resourceEntuLink').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + newEid)
             document.getElementById('resourceEntuLink').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + newEid
             document.getElementById('resourceEntuLink').onclick = function openResourceInBrowser() {
-                require('shell').openExternal('https://entu.keeleressursid.ee/entity/resource/' + newEid)
+                shell.openExternal('https://entu.keeleressursid.ee/entity/resource/' + newEid)
                 return false
             }
             // ipc.send('data', resource)
