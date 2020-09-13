@@ -5,21 +5,20 @@ var path = require('path')
 var async = require('async')
 var mime = require('mime')
 
-var remote = require('remote')
-// var app = remote.require('app')
-var dialog = remote.require('dialog')
-var clipboard = remote.require('clipboard')
+const clipboard = require('electron').remote.clipboard
+const { ipcRenderer } = require('electron').remote
+const { dialog } = require('electron').remote
+console.log(dialog)
 
 var pjson = require(path.join(__dirname, '..', 'package.json'))
 UPLOADERVERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
 
-var ipc = require('ipc')
 
 var b2s = require(path.join(__dirname, 'bytesToSize.js'))
 var uploader = require(path.join(__dirname, 'upload.js'))
 
 var userData = {}
-var data = ipc.sendSync('getUser', null)
+var data = ipcRenderer.sendSync('getUser', null)
 
 function setFormState(state) {
     switch(state) {
@@ -107,7 +106,7 @@ function resourceLoaded() {
     renderResource()
     setFormState('loaded')
     clearInterval(rendererInterval)
-    // ipc.send('data', resource)
+    // ipcRenderer.send('data', resource)
     document.getElementById('uploadResourceButton').onclick = function uploadResource() {
         uploader.upload()
     }
@@ -190,7 +189,7 @@ document.getElementById('selectLocalButton').onclick = function selectLocal () {
 if (!data) {
     data = JSON.parse(clipboard.readText())
     clipboard.clear()
-    ipc.send('setUser', data)
+    ipcRenderer.send('setUser', data)
 }
 if (op.get(data, 'result.user_id', false)) {
     userData.userId = op.get(data, 'result.user_id')
@@ -198,10 +197,10 @@ if (op.get(data, 'result.user_id', false)) {
     userData.name = op.get(data, 'result.name')
     document.getElementById('userName').innerHTML = userData.name
     var title = UPLOADERVERSION + ' | ' + userData.name
-    ipc.send('setTitle', title)
+    ipcRenderer.send('setTitle', title)
     setFormState('select')
 } else {
-    ipc.send('log', 'User data incomplete.')
-    ipc.send('data', data)
+    ipcRenderer.send('log', 'User data incomplete.')
+    ipcRenderer.send('data', data)
 }
-ipc.send('closeAuth')
+ipcRenderer.send('closeAuth')
