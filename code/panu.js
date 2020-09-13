@@ -18,6 +18,7 @@ var userData = {}
 var data = ipcRenderer.sendSync('getUser', null)
 
 function setFormState(state) {
+    console.log('Entering form state:', state)
     switch(state) {
         case 'select':
             document.getElementById('selectLocal').removeAttribute('hidden')
@@ -152,33 +153,38 @@ function recurseLocal(parentResource, paths, loadedCB) {
 document.getElementById('selectLocalButton').onclick = function selectLocal () {
     resource = {name: 'root'}
     resourceStats = {files: {count: 0, size: 0}, directories: {count: 0}, mime:{}}
-    dialog.showOpenDialog({properties:['openFile', 'openDirectory']}, function selectedPath(myPaths) {
-        if (!myPaths) { return }
-        rendererInterval = setInterval(function () { renderResource() }, 100)
-        setFormState('loading')
-        if (myPaths.length === 1) {
-            var singleFile = myPaths[0]
-            op.set(resource, 'name', path.basename(singleFile))
-            document.getElementById('resourceName').value = resource.name
-            fs.stat(singleFile, function(err, stats) {
-                if (err) { throw (err) }
-                if (stats.isDirectory()) {
-                    fs.readdir(singleFile, function(err, files) {
-                        if (err) { throw (err) }
-                        myPaths = files.map(function(file) {
-                            var fullpath = path.join(singleFile, file)
-                            return fullpath
-                        })
-                        recurseLocal(resource, myPaths, resourceLoaded)
+    const dialogOptions = {
+        message: "Vali meelepärane kataloog",
+        properties: ['openFile', 'openDirectory']
+    }
+
+    let myPaths = dialog.showOpenDialogSync(dialogOptions)
+
+    if (!myPaths) { return }
+    rendererInterval = setInterval(function () { renderResource() }, 100)
+    setFormState('loading')
+    if (myPaths.length === 1) {
+        var singleFile = myPaths[0]
+        op.set(resource, 'name', path.basename(singleFile))
+        document.getElementById('resourceName').value = resource.name
+        fs.stat(singleFile, function(err, stats) {
+            if (err) { throw (err) }
+            if (stats.isDirectory()) {
+                fs.readdir(singleFile, function(err, files) {
+                    if (err) { throw (err) }
+                    myPaths = files.map(function(file) {
+                        var fullpath = path.join(singleFile, file)
+                        return fullpath
                     })
-                } else {
                     recurseLocal(resource, myPaths, resourceLoaded)
-                }
-            })
-        } else {
-            recurseLocal(resource, myPaths, resourceLoaded)
-        }
-    })
+                })
+            } else {
+                recurseLocal(resource, myPaths, resourceLoaded)
+            }
+        })
+    } else {
+        recurseLocal(resource, myPaths, resourceLoaded)
+    }
 }
 
 
