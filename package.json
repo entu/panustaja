@@ -2,7 +2,7 @@
   "name": "panustaja",
   "description": "Ressursikataloogi upitamiseks keeleressurside Entu repositooriumisse.",
   "version": "2.0.0",
-  "build": 129,
+  "build": 142,
   "main": "./code/app.js",
   "license": "CC-SA",
   "private": true,

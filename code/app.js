@@ -2,12 +2,7 @@ const path = require('path')
 const fs  = require('fs')
 const util = require('util')
 
-// var op  = require('object-path')
-
-// const app = require('electron').app
-const { app, BrowserWindow, ipcMain, clipboard } = require('electron')
-// var ipcMain = require('electron').ipcMain
-// const { clipboard } = require('electron')
+const { app, clipboard, BrowserWindow, ipcMain } = require('electron')
 
 var windows = {}
 var mainWindow
@@ -27,11 +22,15 @@ if (ISDEV) {
 }
 console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
 
-const webPreferences =  {
+const appWebPreferences =  {
     partition: 'persist:panustaja (build ' + (pjson.build) + ')',
-    // Prevent throttling DOM timers (app gets less priority while in background)
+    pageVisibility: true
+}
+const rendererWebPreferences =  {
+    partition: 'persist:panustaja (build ' + (pjson.build) + ')',
     pageVisibility: true,
-    nodeIntegration: true
+    nodeIntegration: true,
+    enableRemoteModule: true
 }
 
 app.on('ready', function() {
@@ -41,7 +40,7 @@ app.on('ready', function() {
     const authWin = new BrowserWindow({
         width: 600,
         height: 900,
-        webPreferences: webPreferences
+        webPreferences: appWebPreferences
     })
     authWin.loadURL(authUrl, {userAgent: 'Chrome'})
     var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
@@ -64,7 +63,7 @@ app.on('ready', function() {
             authWin.webContents.copy()
 
             setTimeout(function () {
-                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, webPreferences: webPreferences })
+                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, webPreferences: rendererWebPreferences })
                 mainWindow.setTitle('Panustaja')
                 mainWindow.center()
                 var viewPath = path.join(app.getAppPath(), 'code', 'panuView.html')

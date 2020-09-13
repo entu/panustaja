@@ -1,14 +1,11 @@
-// var request = require('request')
 var fs = require('fs')
 var op = require('object-path')
 var path = require('path')
 var async = require('async')
 var mime = require('mime')
 
-const clipboard = require('electron').remote.clipboard
-const { ipcRenderer } = require('electron').remote
-const { dialog } = require('electron').remote
-console.log(dialog)
+const { clipboard, dialog } = require('electron').remote
+const { ipcRenderer } = require('electron')
 
 var pjson = require(path.join(__dirname, '..', 'package.json'))
 UPLOADERVERSION = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '')
