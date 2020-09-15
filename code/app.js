@@ -11,8 +11,7 @@ var userUrl = 'https://entu.keeleressursid.ee/api2/user'
 var authUrl = userUrl + '/auth'
 
 
-ISDEV = true
-// ISDEV = process.env.DEV ? true : false
+ISDEV = process.env.DEV ? true : false
 
 var pjsonPath = path.join(__dirname, '..', 'package.json')
 var pjson = require(pjsonPath)

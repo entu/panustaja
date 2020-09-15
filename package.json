@@ -2,7 +2,7 @@
   "name": "panustaja",
   "description": "Ressursikataloogi upitamiseks keeleressurside Entu repositooriumisse.",
   "version": "2.0.0",
-  "build": 149,
+  "build": 155,
   "main": "./code/app.js",
   "license": "CC-SA",
   "private": true,
@@ -11,7 +11,9 @@
     "url": "git@gitlab.keeleressursid.ee:michelek/panustaja.git"
   },
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dev": "DEV=1 electron .",
+    "distro": "electron-packager . Panustaja --platform=all --arch=x64 --ignore Panustaja"
   },
   "dependencies": {
     "async": "^1.5.0",
