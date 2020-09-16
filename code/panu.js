@@ -194,8 +194,8 @@ if (!data) {
     clipboard.clear()
     ipcRenderer.send('setUser', data)
 }
-if (op.get(data, 'result.user_id', false)) {
-    userData.userId = op.get(data, 'result.user_id')
+if (op.get(data, 'result.id', false)) {
+    userData.userId = op.get(data, 'result.id')
     userData.sessionKey = op.get(data, 'result.session_key')
     userData.name = op.get(data, 'result.name')
     document.getElementById('userName').innerHTML = userData.name

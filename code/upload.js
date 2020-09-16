@@ -1,25 +1,23 @@
-var request = require('request')
-var fs = require('fs')
-var op = require('object-path')
-var path = require('path')
-var async = require('async')
+const querystring = require('querystring')
+const https = require('https')
+const FormData = require('form-data')
+const fs = require('fs')
+const op = require('object-path')
+const path = require('path')
+const async = require('async')
 
 const { shell } = require('electron').remote
 
-// var remote = require('remote')
-// var dialog = remote.require('dialog')
+const b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
 
-var b2s = require(path.join(__dirname, '..', 'code', 'bytesToSize.js'))
+const resourceRootEid = 4387
+const ENTUHOSTNAME = 'entu.keeleressursid.ee'
+const ENTITYAPIPATHNAME = '/api2/entity'
+const FILEAPIPATHNAME = '/api2/file'
 
-var resourceRootEid = 4387
 var uploadedResourcesProgress
 var uploadedFilesProgress
-ENTUAPI = 'https://entu.keeleressursid.ee/api2'
-ENTUAPIENTITY = 'https://entu.keeleressursid.ee/api2/entity'
-ENTUAPIFILE = 'https://entu.keeleressursid.ee/api2/file'
-
 var rendererInterval
-
 var fileUploadTasks = []
 
 
@@ -33,121 +31,128 @@ function renderProgress() {
 }
 
 
-function addEntuFile(eid, filePath, callback) {
+function addEntuFile(eid, filePath, resource, callback) {
+    // console.log('U: Uploading file ' + filePath + ' at resource ' + eid)
 
-    var options = {
-        url: ENTUAPIFILE,
-        headers: {
-            'X-Auth-UserId': userData.userId,
-            'X-Auth-Token': userData.sessionKey,
-            'User-Agent': UPLOADERVERSION
-        }
+    const headers = {
+        'X-Auth-UserId': userData.userId,
+        'X-Auth-Token': userData.sessionKey,
+        'User-Agent': UPLOADERVERSION,
+        'X-FILENAME': path.basename(filePath),
+        'X-ENTITY': eid,
+        'X-PROPERTY': 'resource-file'
     }
 
-    // var req = request.post(options, function (err, resp, body) {
-    var req = request.post(options, function (err) {
-        // console.log(err, resp, JSON.parse(body))
-        if (err) {
-            callback(err)
-        // } else if (resp.status.statusCode !== 200) { callback(body) }
-        } else {
-            // console.log('URL: ' + body)
-            callback()
-        }
+    const readStream = fs.createReadStream(filePath)
+    readStream.on('data', function(chunk) {
+        uploadedFilesProgress += chunk.length
+    })
+    readStream.on('end', function () {
+        // console.log('finished stream', req)
+        req.end()
     })
 
-
-    var form = req.form()
-    var readStream = fs.createReadStream(filePath)
-    form.append('file', readStream)
+    const form = new FormData()
     form.append('entity', eid)
     form.append('property', 'resource-file')
     form.append('filename', path.basename(filePath))
-    readStream.on('data', function(chunk) {
-        uploadedFilesProgress += chunk.length
-        // console.log('Uploaded: ' + uploadedFilesProgress + '(+' + chunk.length + ')')
-    })
-}
-
-function addEntuProperties(eid, data, callback) {
-
-    request.put({
-        url: preparedUrl,
-        headers: headers,
-        body: qb,
-        strictSSL: true,
-        json: true,
-        timeout: 60000
-    }, function(error, response, body) {
-        if(error) return callback(error)
-        if(response.statusCode !== 201 || !body.result) return callback(new Error(op.get(body, 'error', body)))
-
-        callback(null, op.get(body, 'result.properties.' + property + '.0', null))
-    })
-
-    var urlData = Object.keys(data).map(function (ix) {return ix + '=' + data[ix]}).join('&')
-    // console.log(urlData)
-    var xhr = new window.XMLHttpRequest()
-    xhr.open('PUT', ENTUAPIENTITY + '-' + eid + '?' + urlData, true)
-    xhr.setRequestHeader('X-Auth-UserId', userData.userId)
-    xhr.setRequestHeader('X-Auth-Token', userData.sessionKey)
-    xhr.onload = function () {
-        // var response = JSON.parse(this.responseText)
-        // console.log(JSON.stringify({sent:data, got:response}, null, 4))
+    form.append('file', readStream)
+    // console.log('form with entity', eid, form)
+    
+    let options = {
+        hostname: ENTUHOSTNAME,
+        path: FILEAPIPATHNAME,
+        method: 'POST',
+        headers: headers
+    }
+    
+    const req = https.request(options, response => {
+        // console.log('Status', response.statusCode)
+        // if (response.statusCode !== 201) {
+        //     return callback(new Error(op.get(postData, 'error', postData)))
+        // }
+        let body = ''
+        response.setEncoding('utf8')
+        response.on('data', (chunk) => { body = body + chunk })
+        response.on('end', () => {
+            body = JSON.parse(body)
+            // console.log('Response body', body)
+        })    
         callback()
-    }
-    xhr.onerror = function(err) {
-        callback('ERROR: ' + err)
-    }
-    xhr.send(data)
+    })
+    req.on('error', (e) => { return callback(e) })
+
+    form.pipe(req)
+    postData = querystring.stringify({'entity': eid})
+    req.write(postData)
+    // req.end()
 }
+
 
 function createEntuResource(parentEid, resource, callback) {
     // console.log('create under EID:', parentEid)
+    // console.log('resource::', op.get(resource))
 
-    var body = {
+    let postData = {
         'definition': 'resource',
         'resource-name': path.basename(op.get(resource, ['name'], 'nameless resource')),
         'resource-uploader-version': UPLOADERVERSION
     }
     if (op.get(resource, ['mime-encode'], false)) {
-        op.set(body, ['resource-mime-encode'], op.get(resource, ['mime-encode']))
+        op.set(postData, ['resource-mime-encode'], op.get(resource, ['mime-encode']))
     }
     if (op.get(resource, ['size'], false)) {
-        op.set(body, ['resource-size'], op.get(resource, ['size']))
+        op.set(postData, ['resource-size'], op.get(resource, ['size']))
+    }
+    postData = querystring.stringify(postData)
+
+    const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': postData.length,
+        'X-Auth-UserId': userData.userId,
+        'X-Auth-Token': userData.sessionKey
     }
 
-    var preparedUrl = ENTUAPIENTITY + '-' + parentEid
-    var headers = {'X-Auth-UserId': userData.userId, 'X-Auth-Token': userData.sessionKey}
+    const options = {
+        hostname: ENTUHOSTNAME,
+        path: ENTITYAPIPATHNAME + '-' + parentEid,
+        method: 'POST',
+        headers: headers
+    }
+    // console.log('Request with options ', options)
 
-    // console.log('Try to execute URL ' + preparedUrl, userData, body)
-    request.post({
-        url: preparedUrl,
-        headers: headers,
-        body: body,
-        strictSSL: true,
-        json: true,
-        timeout: 60000
-    }, function(error, response, body) {
-        // console.log('result', body)
-        if(error) return callback(error)
-        if(response.statusCode !== 201) return callback(new Error(op.get(body, 'error', body)))
+    const req = https.request(options, (res) => {
+        // console.log('RES:', res)
+        // console.log('HEADERS:' ${JSON.stringify(res.headers)}`)
+        if (res.statusCode !== 201) {
+            return callback(new Error(op.get(postData, 'error', postData)))
+        }
+        let body = ''
+        res.setEncoding('utf8')
+        res.on('data', (chunk) => { body = body + chunk })
+        res.on('end', () => {
+            body = JSON.parse(body)
+            // console.log('Response body', body)
 
-        var newEid = body.result.id
-        uploadedResourcesProgress++
-        op.get(resource, ['files'], []).forEach(function(filePath) {
-            fileUploadTasks.push(function uploadFile(callback) {
-                document.getElementById('status').innerHTML = newEid + ' : ' + filePath
-                // console.log('F: Uploading file ' + filePath + ' at resource ' + newEid)
-                addEntuFile(newEid, filePath, function fileAddedCB() {
-                    callback()
+            var newEid = body.result.id
+            uploadedResourcesProgress++
+            op.get(resource, ['files'], []).forEach(function(filePath) {
+                fileUploadTasks.push(function uploadFile(callback) {
+                    document.getElementById('status').innerHTML = newEid + ' : ' + filePath
+                    // console.log('F: Uploading file ' + filePath + ' at resource ' + newEid)
+                    addEntuFile(newEid, filePath, resource, function fileAddedCB() {
+                        callback()
+                    })
                 })
+                // console.log('F: Queued file ' + filePath + ' for upload at resource ' + newEid)
             })
-            // console.log('F: Queued file ' + filePath + ' for upload at resource ' + newEid)
+            callback(null, newEid)
         })
-
-        callback(null, newEid)
     })
+    req.on('error', (e) => { return callback(e) })
+
+    req.write(postData)
+    req.end()
 }
 
 function recurseResources(parentEid, resource, resourcesCreatedCB) {
@@ -181,13 +186,16 @@ function upload() {
         function runRecurseResources(callback) {
             recurseResources(resourceRootEid, resource, function resourcesCreated(err, newEid) {
                 if (err) { return callback(err) }
+                // console.log('resources created; eid', newEid)
                 callback(null, newEid)
             })
         },
         function runFileUploadTasks(newEid, callback) {
-            async.parallelLimit(fileUploadTasks, 3, function filesUploaded() { callback(null, newEid) })
+                // console.log('runFileUploadTasks; eid', newEid)
+                async.parallelLimit(fileUploadTasks, 1, function filesUploaded() { callback(null, newEid) })
         },
         function updateUI(newEid, callback) {
+            // console.log('set form state uploaded; eid', newEid)
             setFormState('uploaded')
             document.getElementById('resourceEntuLink').setAttribute('href', 'https://entu.keeleressursid.ee/entity/resource/' + newEid)
             document.getElementById('resourceEntuLink').innerHTML = 'https://entu.keeleressursid.ee/entity/resource/' + newEid
@@ -203,7 +211,6 @@ function upload() {
         if (err) { return err }
     })
 }
-
 
 
 module.exports.upload = upload

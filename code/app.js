@@ -4,68 +4,67 @@ const util = require('util')
 
 const { app, clipboard, BrowserWindow, ipcMain } = require('electron')
 
-var windows = {}
-var mainWindow
+let mainWindow
 
-var userUrl = 'https://entu.keeleressursid.ee/api2/user'
-var authUrl = userUrl + '/auth'
+const userUrl = 'https://entu.keeleressursid.ee/api2/user'
+const authUrl = userUrl + '/auth'
 
+const ISDEV = process.env.DEV ? true : false
 
-ISDEV = process.env.DEV ? true : false
-
-var pjsonPath = path.join(__dirname, '..', 'package.json')
-var pjson = require(pjsonPath)
+const pjsonPath = path.join(__dirname, '..', 'package.json')
+let pjson = require(pjsonPath)
 if (ISDEV) {
     pjson.build++
     fs.writeFileSync(pjsonPath, JSON.stringify(pjson, null, 2))
 }
-console.log('----==== ' + pjson.name + ' v.' + pjson.version + ' (build ' + (pjson.build) + ') ====----')
+const appBuildNr = pjson.build
+const appVersion = pjson.version
+const appName = pjson.name
+
+console.log('----==== ' + appName + ' v.' + appVersion + ' (build ' + (appBuildNr) + ') ====----')
+const authWindowTitle = appName + ' v.' + appVersion + (appVersion.indexOf('-') > -1 ? appBuildNr : '') + ' | Logi sisse'
 
 const appWebPreferences =  {
-    partition: 'persist:panustaja (build ' + (pjson.build) + ')',
-    pageVisibility: true
+    partition: 'persist:panustaja (build ' + (appBuildNr) + ')',
+    pageVisibility: true,
+    worldSafeExecuteJavaScript: true
 }
 const rendererWebPreferences =  {
-    partition: 'persist:panustaja (build ' + (pjson.build) + ')',
+    partition: 'persist:panustaja (build ' + (appBuildNr) + ')',
     pageVisibility: true,
     nodeIntegration: true,
-    enableRemoteModule: true
+    enableRemoteModule: true,
+    worldSafeExecuteJavaScript: true
 }
 
 app.on('ready', function() {
-
-
-
     const authWin = new BrowserWindow({
-        width: 600,
-        height: 900,
+        width: 793, height: 490,
         webPreferences: appWebPreferences
     })
     authWin.loadURL(authUrl, {userAgent: 'Chrome'})
-    var title = pjson.name + ' v.' + pjson.version + (pjson.version.indexOf('-') > -1 ? pjson.build : '') + ' | Logi sisse'
     authWin.center()
-    authWin.setTitle(title)
-
+    authWin.setTitle(authWindowTitle)
 
     authWin.webContents.on('did-get-response-details', function(e, s, newUrl) {
-        authWin.setTitle(title)
+        authWin.setTitle(authWindowTitle)
         if (newUrl === userUrl || newUrl === userUrl + '#') {
             authWin.hide()
         }
     })
     authWin.webContents.on('did-finish-load', function() {
-        authWin.setTitle(title)
-        var newUrl = authWin.webContents.getURL()
+        authWin.setTitle(authWindowTitle)
+        const newUrl = authWin.webContents.getURL()
         if (newUrl === userUrl || newUrl === userUrl + '#') {
             clipboard.clear()
             authWin.webContents.selectAll()
             authWin.webContents.copy()
 
             setTimeout(function () {
-                mainWindow = new BrowserWindow({ width: 900, height: 600, show: true, webPreferences: rendererWebPreferences })
+                mainWindow = new BrowserWindow({ width: 793, height: 490, show: true, webPreferences: rendererWebPreferences })
                 mainWindow.setTitle('Panustaja')
                 mainWindow.center()
-                var viewPath = path.join(app.getAppPath(), 'code', 'panuView.html')
+                const viewPath = path.join(app.getAppPath(), 'code', 'panuView.html')
                 mainWindow.webContents.loadURL('file://' + viewPath)
                 if (ISDEV) {
                     mainWindow.webContents.openDevTools(true)
